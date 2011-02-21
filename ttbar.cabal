@@ -1,0 +1,39 @@
+Name:		ttbar
+Version:	0.0
+Synopsis:	Useful  Useful functions for ttbar physics
+Description: 	Common useful function for ttbar production physics 
+License: 	GPL-3
+License-file:	LICENSE
+Author:		Ian-Woo Kim
+Maintainer: 	Ian-Woo Kim <ianwookim@gmail.com>
+Build-Depends:	base>4, binary, LHCOAnalysis, HROOT, HEPUtil, unix, mersenne-random, array, LHAPDF-haskell, iteratee-util, iteratee>0.4, hmatrix, mtl>2, transformers, simann, HEPMonteCarlo
+Build-Type: 	Simple
+
+hs-source-dirs: src
+ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind
+ghc-prof-options: -caf-all -auto-all
+
+Exposed-Modules: 
+		 HEP.Physics.TTBar,
+		 HEP.Physics.TTBar.Analysis,
+		 HEP.Physics.TTBar.Analysis.Combined,
+		 HEP.Physics.TTBar.Analysis.MonteCarlo.Plain,
+		 HEP.Physics.TTBar.Analysis.MonteCarlo.Vegas,
+		 HEP.Physics.TTBar.Analysis.Separate,
+		 HEP.Physics.TTBar.Analysis.XSection,
+  		 HEP.Physics.TTBar.CutSets,
+		 HEP.Physics.TTBar.Cuts,
+		 HEP.Physics.TTBar.Error,
+		 HEP.Physics.TTBar.FileWork,
+		 HEP.Physics.TTBar.Model.Exotic,
+		 HEP.Physics.TTBar.Print,
+		 HEP.Physics.TTBar.Reconstruction.Combined,
+		 HEP.Physics.TTBar.Reconstruction.Hadronic,
+		 HEP.Physics.TTBar.Reconstruction.Leptonic,
+		 HEP.Physics.TTBar.TaskManager,
+		 HEP.Physics.TTBar.Tester.XSecTester,
+		 HEP.Physics.TTBar.Tester.XSecTester.Common,
+		 HEP.Physics.TTBar.Tester.XSecTester.Parton,
+		 HEP.Physics.TTBar.Tester.XSecTester.Proton
+
+		 
