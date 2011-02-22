@@ -39,10 +39,12 @@ data LeptonError = LeptonError {
 } 
 
 
--- Temporary 
-lerr = LeptonError (0.008,0.00015) 0.001 0.001  
+-- Temporary
+lepError :: LeptonError 
+lepError = LeptonError (0.008,0.00015) 0.001 0.001  
 
-jerr = JetError {  
+jetError :: JetError
+jetError = JetError {  
   jeterr_ET_high = (4.8, 0.89, 0.043), 
   jeterr_ET_low  = (5.6, 1.25, 0.033),  
   jeterr_etarange_high = (1.4,3.0),

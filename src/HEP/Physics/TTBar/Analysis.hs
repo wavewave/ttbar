@@ -3,9 +3,6 @@
 
 module HEP.Physics.TTBar.Analysis where
 
-import Debug.Trace
-
-import HROOT
 import LHCOAnalysis hiding (FourMomentum,fourmomfrometaphipt,trd3)
 
 

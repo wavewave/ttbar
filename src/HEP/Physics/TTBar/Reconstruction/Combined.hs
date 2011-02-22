@@ -1,11 +1,8 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 module HEP.Physics.TTBar.Reconstruction.Combined where
 
-import LHCOAnalysis hiding (fourmomfrometaphipt, FourMomentum(..))
-
-import Debug.Trace
-import System.IO.Unsafe
-import Data.IORef
-
+import LHCOAnalysis hiding (fourmomfrometaphipt, FourMomentum)
 
 import Numeric.LinearAlgebra 
 import Numeric.GSL.Minimization 
@@ -43,9 +40,12 @@ data TheOthers = TheOthers {
 
 data ChargeSign = Plus | Minus
                 deriving (Show,Eq)
+
+chargesign :: forall a . (Num a, Ord a) => a -> ChargeSign
 chargesign ch 
-  | ch > 0 = Plus 
+  | ch >= 0 = Plus 
   | ch < 0 = Minus                       
+  | otherwise = Plus
 
 data SemiLepTopBothInfo = SemiLepTopBothInfo { 
   info_charge_l :: ChargeSign, 
@@ -114,16 +114,16 @@ y1 ::  SemiLepTopBothMom -> Double
 y1 einfo = sqr4 (mom_lep_n einfo) 
 
 y2 :: SemiLepTopBothMom -> Double
-y2 einfo = sqr4 (mom_lep_l einfo `plus`  mom_lep_n einfo )  - mw^2
+y2 einfo = sqr4 (mom_lep_l einfo `plus`  mom_lep_n einfo )  - mw^(2 :: Int)
 
 y3 :: SemiLepTopBothMom -> Double 
-y3 einfo = sqr4 (mom_lep_b einfo `plus` mom_lep_l einfo `plus` mom_lep_n einfo) - mt^2 
+y3 einfo = sqr4 (mom_lep_b einfo `plus` mom_lep_l einfo `plus` mom_lep_n einfo) - mt^(2 :: Int) 
 
 y4 :: SemiLepTopBothMom -> Double 
-y4 einfo = sqr4 (mom_had_Wj1 einfo `plus` mom_had_Wj2 einfo) - mw^2 
+y4 einfo = sqr4 (mom_had_Wj1 einfo `plus` mom_had_Wj2 einfo) - mw^(2 :: Int) 
 
 y5 :: SemiLepTopBothMom -> Double
-y5 einfo = sqr4 (mom_had_b einfo `plus` mom_had_Wj1 einfo `plus` mom_had_Wj2 einfo) - mt^2 
+y5 einfo = sqr4 (mom_had_b einfo `plus` mom_had_Wj1 einfo `plus` mom_had_Wj2 einfo) - mt^(2 :: Int) 
 
 yVec :: SemiLepTopBothMom -> Vector Double
 yVec einfo = 5 |> [ y1 einfo, y2 einfo, y3 einfo, y4 einfo, y5 einfo]
@@ -131,18 +131,18 @@ yVec einfo = 5 |> [ y1 einfo, y2 einfo, y3 einfo, y4 einfo, y5 einfo]
 
 mkCorrMat :: JetError -> LeptonError -> SemiLepTopBothInfo 
              -> CorrelationMatrix
-mkCorrMat jerr lerr sinfo = CorrMat {  
-          corr_pp_b  = pp_corr b  (errorJet jerr b) 
+mkCorrMat jeterr lerr sinfo = CorrMat {  
+          corr_pp_b  = pp_corr b  (errorJet jeterr b) 
         , corr_pp_l  = pp_corr l  (errorLepton lerr l) 
-        , corr_pp_hb = pp_corr hb (errorJet jerr hb) 
-        , corr_pp_j1 = pp_corr j1 (errorJet jerr j1) 
-        , corr_pp_j2 = pp_corr j2 (errorJet jerr j2) 
+        , corr_pp_hb = pp_corr hb (errorJet jeterr hb) 
+        , corr_pp_j1 = pp_corr j1 (errorJet jeterr j1) 
+        , corr_pp_j2 = pp_corr j2 (errorJet jeterr j2) 
           
-        , corr_pm_b  = pmissp_corr b  (errorJet jerr b) 
+        , corr_pm_b  = pmissp_corr b  (errorJet jeterr b) 
         , corr_pm_l  = pmissp_corr l  (errorLepton lerr l) 
-        , corr_pm_hb = pmissp_corr hb (errorJet jerr hb)
-        , corr_pm_j1 = pmissp_corr j1 (errorJet jerr j1)
-        , corr_pm_j2 = pmissp_corr j2 (errorJet jerr j2)
+        , corr_pm_hb = pmissp_corr hb (errorJet jeterr hb)
+        , corr_pm_j1 = pmissp_corr j1 (errorJet jeterr j1)
+        , corr_pm_j2 = pmissp_corr j2 (errorJet jeterr j2)
   
         , corr_merr = masserr
         , corr_mm   = pmisspmiss_corr (jswitherr ++ lswitherr) 
@@ -157,7 +157,7 @@ mkCorrMat jerr lerr sinfo = CorrMat {
         js = b : hb : j1 : j2 : map dropm (info_otherjets sinfo)
         ls = l : info_otherleptons sinfo
           
-        jswitherr = map (\x -> (x,errorJet jerr x)) js 
+        jswitherr = map (\x -> (x,errorJet jeterr x)) js 
         lswitherr = map (\x -> (x,errorLepton lerr x)) ls
 
          
@@ -222,7 +222,7 @@ dydp einfo =
     }
 
 vMatrix :: Matrix Double -> Matrix Double -> Matrix Double 
-vMatrix u dydp = dydp <> u <> trans dydp
+vMatrix u dydpmat = dydpmat <> u <> trans dydpmat
 
 chiSqr :: Vector Double -> Matrix Double -> Double 
 chiSqr y v = y <.> (vinv <> y)
@@ -244,12 +244,13 @@ minimizeChiSqrSimple :: JetError
                         -> MinimizeMethod       -- ^ MinimizeMethod (defined in hmatrix ) 
                         -> (Double,Double)      -- ^ initial guess 
                         -> ChiSqrMinResultSet
-minimizeChiSqrSimple jerr lerr sinfo minmethod (ip0, ip3) =
-  let umat = uMatrix . (mkCorrMat jerr lerr) $ sinfo
+minimizeChiSqrSimple jeterr lerr sinfo minmethod (ip0, ip3) =
+  let umat = uMatrix . (mkCorrMat jeterr lerr) $ sinfo
       tempChiSqr :: [Double] -> Double
       tempChiSqr [p0,p3] = chiSqrMinimizable sinfo umat (p0,p3)
-
-      ([x0,x3],p) =  minimize minmethod 1E-3 30 [100,100] tempChiSqr [ip0,ip3]
+      tempChiSqr _ = error "no double list : tempChiSqr"
+      
+      ([x0,x3],_) =  minimize minmethod 1E-3 30 [100,100] tempChiSqr [ip0,ip3]
       y = tempChiSqr [x0,x3] 
   in ChiSqrMinResultSet { 
        csmrs_p0p3   = (x0,x3)
@@ -260,10 +261,10 @@ minimizeChiSqrSimple jerr lerr sinfo minmethod (ip0, ip3) =
 minimizeChiSqrSimAnn :: JetError -> LeptonError -> SemiLepTopBothInfo 
                         -> (Double,Double)
                         -> IO ChiSqrMinResultSet
-minimizeChiSqrSimAnn jerr lerr sinfo (ip0,ip3) = 
-  do let umat = uMatrix . (mkCorrMat jerr lerr) $ sinfo
+minimizeChiSqrSimAnn jeterr lerr sinfo (ip0,ip3) = 
+  do let umat = uMatrix . (mkCorrMat jeterr lerr) $ sinfo
          e1 = chiSqrMinimizable sinfo umat  
-         m1 (x1,y1) (x2,y2) = (x1-x2)^2 + (y1-y2)^2
+         m1 (x1,y1) (x2,y2) = (x1-x2)^(2 :: Int) + (y1-y2)^(2 :: Int)
      
          param= SAParam {                    
            saparam'n_tries       = 200, 
@@ -289,9 +290,9 @@ minimizeChiSqrSimAnn jerr lerr sinfo (ip0,ip3) =
 stagedMinimizer4ChiSqrUsingSimpleAndSA :: SemiLepTopBothInfo -> IO ChiSqrMinResultSet
 stagedMinimizer4ChiSqrUsingSimpleAndSA sinfo = do 
   let (ip0,ip3) = (0,0) -- I don't want to deal with initial guess now. I will come back later
-  result1 <- minimizeChiSqrSimAnn jerr lerr sinfo (ip0,ip3)
+  result1 <- minimizeChiSqrSimAnn jetError lepError sinfo (ip0,ip3)
   let newp0p3 = csmrs_p0p3 result1 
-  return $ minimizeChiSqrSimple jerr lerr sinfo NMSimplex2 newp0p3 
+  return $ minimizeChiSqrSimple jetError lepError sinfo NMSimplex2 newp0p3 
 
 
 action4AllComb :: (PhyEventClassified -> IO ())   -- ^ starter
@@ -323,8 +324,8 @@ minChiSqr4AllComb minimizer p = action4AllComb showEventNum minimizer p
 minimizerComparison :: SemiLepTopBothInfo -> IO (ChiSqrMinResultSet,ChiSqrMinResultSet,ChiSqrMinResultSet) 
 minimizerComparison sinfo = do 
   putStrLn "Minimizer Comparison" 
-  let simpleMinimizerResult = minimizeChiSqrSimple jerr lerr sinfo NMSimplex2 (0,0)
-  simannMinimizerResult <- minimizeChiSqrSimAnn jerr lerr sinfo (0,0) 
+  let simpleMinimizerResult = minimizeChiSqrSimple jetError lepError sinfo NMSimplex2 (0,0)
+  simannMinimizerResult <- minimizeChiSqrSimAnn jetError lepError sinfo (0,0) 
   combinedMinimizerResult <- stagedMinimizer4ChiSqrUsingSimpleAndSA sinfo
   return (simpleMinimizerResult, simannMinimizerResult, combinedMinimizerResult )
 
@@ -334,21 +335,6 @@ showComparison (r1,r2,r3) = do
   putStrLn $ "simann : " ++ (show (csmrs_chisqr r2)) 
   putStrLn $ "combin : " ++ (show (csmrs_chisqr r3))
       
-{-                        
-minChiSqr4AllComb :: ( SemiLepTopBothInfo -> IO ChiSqrMinResultSet ) 
-                     -> PhyEventClassified -> IO [ChiSqrMinResultSet]
-minChiSqr4AllComb minimizer p = do
-  hline
-  putStrLn $ "event  : " ++ (show . eventid $ p )
-  hline
-      
-  case cnstrctCombinatorics p of 
-    Nothing -> return []
-    Just r -> do let comb = (map mkSemiLepTopBothInfo) r
-                 hline
-                 putStrLn $ "chisqr minimum for all comb by Simulated Annealing"
-                 mapM minimizer comb   -}
-
 
   
 findMinFrmChiSqrResultSetLst :: [ChiSqrMinResultSet] -> ChiSqrMinResultSet
@@ -372,6 +358,7 @@ testeventToInfo p = let blst = bjetlst p
                     in SemiLepTopBothInfo {
                       info_lep_b      = etaphiptm . snd $ head leptonic_bs,
                       info_lep_l      = etaphipt  . snd $ head leptonic_ls,
+                      info_charge_l   = undefined,
                       info_lep_missPT = pxpyFromPhiPT . phiptmet $ met p, 
                       info_had_Wj1    = etaphiptm . snd $ wjets !! 0, 
                       info_had_Wj2    = etaphiptm . snd $ wjets !! 1,
@@ -406,6 +393,7 @@ cnstrctCombinatorics p = do
   case nbjets of 
     1 -> return singleBjetCase
     2 -> return doubleBjetCase      
+    _ -> error "more than 2 jet or 0 jet? in cnstrctCombinatorics"
     
   where leptons = map (\x->((etaphipt.snd) x,(chargesign.charge.snd) x)) (leptonlst p) 
         bjets   = map (etaphiptm.snd) (bjetlst p)
@@ -416,7 +404,7 @@ cnstrctCombinatorics p = do
         nleptons = length leptons
         nbjets   = length bjets
         njets    = length jets
-        n_bjets_or_jets = nbjets + njets
+        -- n_bjets_or_jets = nbjets + njets
         
         mkTriple (lcharge,b,l,wj1,wj2,hb,others) = (linfo,hinfo,oinfo)
           where linfo = LepTopJetInfo { leptop_lcharge = lcharge, 

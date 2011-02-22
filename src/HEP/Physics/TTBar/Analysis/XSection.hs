@@ -58,12 +58,12 @@ testTripletArg = SA {
 totalXSec_qq_exotic :: ColorExoticArg -> PartCalculation 
                        -> (Double,Double,Double) -> Double
 totalXSec_qq_exotic (SA c0 c2 y mt mphi) pcalc (alphaS, s, costh) =
-  if s > 4.0*mt^2 
+  if s > 4.0*mt^(2::Int) 
     then let gs = sqrt (4.0*pi*alphaS)
              bet = beta mt s  
              bcosth = bet*costh
              ut = -s*(1+bcosth)/2
-             uphi = ut+mt^2-mphi^2 
+             uphi = ut+mt^(2::Int)-mphi^(2::Int) 
              summ2 = sumM2Wcosth pcalc c0 c2 gs y s mt uphi bcosth   
          in  dsigma s bet summ2
     else 0.0  
@@ -71,23 +71,23 @@ totalXSec_qq_exotic (SA c0 c2 y mt mphi) pcalc (alphaS, s, costh) =
 
 totalXSec_qq_SM :: Double -> Double -> Double
 totalXSec_qq_SM alphaS s =
-  if s > 4.0*mt^2 
-     then let rho = 4.0 * mt^2 / s
+  if s > 4.0*mt^(2::Int) 
+     then let rho = 4.0 * mt^(2::Int) / s
               beta = sqrt ( 1.0 - rho ) 
               fqqbar = (pi*beta*rho) / 27.0 * (2.0+rho) 
-          in  alphaS^2 / mt^2 * fqqbar
+          in  alphaS^(2::Int) / mt^(2::Int) * fqqbar
      else 0 
 
 totalXSec_gg_SM :: Double -> Double -> Double
 totalXSec_gg_SM alphaS s =
-  if s > 4.0*mt^2 
-     then let rho = 4.0 * mt^2 / s
+  if s > 4.0*mt^(2::Int) 
+     then let rho = 4.0 * mt^(2::Int) / s
               beta = sqrt ( 1.0 - rho ) 
               fgg = (pi*beta*rho) / 192.0 
-                    * ( 1.0 / beta * (rho^2 + 16.0*rho+16.0)  
+                    * ( 1.0 / beta * (rho^(2::Int) + 16.0*rho+16.0)  
                         * log ((1.0+beta)/(1.0-beta)) 
                         - 28.0 - 31.0 * rho )  
-          in  alphaS^2 / mt^2 * fgg
+          in  alphaS^(2::Int) / mt^(2::Int) * fgg
      else 0 
 
 

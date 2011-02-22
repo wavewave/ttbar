@@ -1,13 +1,10 @@
 module HEP.Physics.TTBar.Reconstruction.Leptonic where
 
-import LHCOAnalysis hiding (fourmomfrometaphipt, FourMomentum(..))
-
-import Debug.Trace
+import LHCOAnalysis hiding (fourmomfrometaphipt, FourMomentum)
 
 import Numeric.LinearAlgebra 
 import Numeric.GSL.Minimization 
 import HEP.Util.Functions
-import HEP.Util.Combinatorics 
 import HEP.Physics.TTBar.Error  
 
 -- lepton momentum : etl etal phil 
@@ -57,11 +54,11 @@ y0 :: SemiLepExc4Mom -> Double
 y0 einfo = sqr4 (neutrino_4mom einfo) 
 
 y1 :: SemiLepExc4Mom -> Double 
-y1 einfo = sqr4 (lepton_4mom einfo `plus` neutrino_4mom einfo) - mw^2 
+y1 einfo = sqr4 (lepton_4mom einfo `plus` neutrino_4mom einfo) - mw^(2 :: Int) 
     
 y2 :: SemiLepExc4Mom -> Double 
 y2 einfo = sqr4 (lepton_4mom einfo `plus` neutrino_4mom einfo 
-                 `plus` bquark_4mom einfo) - mt^2
+                 `plus` bquark_4mom einfo) - mt^(2 :: Int)
 
 
 umatrix :: JetError -> LeptonError -> SemiLepTopInfo 
@@ -97,7 +94,7 @@ dydp einfo =
   where (pl0,pl1,pl2,pl3) = lepton_4mom einfo
         (pb0,pb1,pb2,pb3) = bquark_4mom einfo
         (pn0,pn1,pn2,pn3) = neutrino_4mom einfo
-        pn = sqrt (pn1^2+pn2^2+pn3^2)
+        -- pn = sqrt (pn1^(2 :: Int)+pn2^(2 :: Int)+pn3^(2 :: Int))
     
         l10 = 2.0 * (pl0 + pn0) 
         l11 = -2.0 * (pl1 + pn1)
@@ -150,11 +147,11 @@ chisqr jerr lerr sinfo (pmiss0, pmiss3) = y <.> (vinv <> y)
 chisqr_min :: JetError -> LeptonError -> SemiLepTopInfo 
               -> IO ((Double,Double),Double) 
 chisqr_min jerr lerr sinfo = do 
-      let ([x0,x3],p) = minimize NMSimplex2 1E-3 30 [100,100] f [0,0]
+      let ([x0,x3],_) = minimize NMSimplex2 1E-3 30 [100,100] f [0,0]
           y = f [x0,x3]     
       return ((x0,x3),y)
   where f [x0,x3] = chisqr jerr lerr sinfo (x0,x3)
-          
+        f _ = error "(no two dimensional result) in chisqr_min"   
 
 
 eventToInfo :: PhyEventClassified -> SemiLepTopInfo

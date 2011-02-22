@@ -23,30 +23,30 @@ data ThreeJetsMom = ThreeJetsMom {
 
 yj1 :: ThreeJetsMom -> Double 
 yj1 (ThreeJetsMom j1 j2 j3) = sqr4 (jmom1 `plus` jmom2 `plus` jmom3)
-                              - mt^2
+                              - mt^(2 :: Int)
   where jmom1 = fourmomfrometaphipt j1 
         jmom2 = fourmomfrometaphipt j2 
         jmom3 = fourmomfrometaphipt j3
 
 
 yj2 :: ThreeJetsMom -> Double 
-yj2 (ThreeJetsMom j1 j2 _ ) = sqr4 (jmom1 `plus` jmom2) - mt^2
+yj2 (ThreeJetsMom j1 j2 _ ) = sqr4 (jmom1 `plus` jmom2) - mt^(2 :: Int)
   where jmom1 = fourmomfrometaphipt j1 
         jmom2 = fourmomfrometaphipt j2 
 
 
 
 umatrixj :: JetError -> ThreeJetsMom -> Matrix Double 
-umatrixj jerr threejet@(ThreeJetsMom j1 j2 j3) = 
+umatrixj jeterr (ThreeJetsMom j1 j2 j3) = 
   fromBlocks [ [ pp j1 , 0     , 0     , 0       ] 
              , [ 0     , pp j2 , 0     , 0       ] 
              , [ 0     , 0     , pp j3 , 0       ] 
              , [ 0     , 0     , 0     , masserr ] ]  
-  where pp j = pp_corr j (errorJet jerr j) 
+  where pp j = pp_corr j (errorJet jeterr j) 
 --        deltamt' = (1><1) [deltamt]
         
 dydpj :: ThreeJetsMom -> Matrix Double 
-dydpj threejet@(ThreeJetsMom j1 j2 j3) =
+dydpj (ThreeJetsMom j1 j2 j3) =
   (2><14) [ elem10, elem11, elem12, elem13, elem20, elem21, elem22, elem23, elem30, elem31, elem32, elem33, 0, elemmt
           , elem10, elem11, elem12, elem13, elem20, elem21, elem22, elem23,      0,      0,      0,      0, elemmw, 0 ]
   
@@ -73,9 +73,9 @@ dydpj threejet@(ThreeJetsMom j1 j2 j3) =
         elemmw = -2.0 * mw 
 
 vmatrixj :: JetError -> ThreeJetsMom -> Matrix Double  
-vmatrixj jerr threejet = 
+vmatrixj jeterr threejet = 
   let dydpmat = dydpj threejet
-  in  dydpmat <> (umatrixj jerr threejet <> trans dydpmat )
+  in  dydpmat <> (umatrixj jeterr threejet <> trans dydpmat )
        
                          
 yjvec :: ThreeJetsMom -> Vector Double
@@ -83,24 +83,26 @@ yjvec tj = 2 |> [ yj1 tj, yj2 tj ]
 
 
 chisqr3jet :: JetError -> ThreeJetsMom -> Double 
-chisqr3jet jerr threejet = (yjvec threejet) <.> (inv (vmatrixj jerr threejet) <> yjvec threejet)
+chisqr3jet jeterr threejet = (yjvec threejet) <.> (inv (vmatrixj jeterr threejet) <> yjvec threejet)
 
 
 threejetchisqr :: JetError -> FourMomentum -> [EtaPhiPT] -> [(Double,[Double])] 
-threejetchisqr jerr topmom otherjet = map f otherjets_comb 
-  where chisqr3func = (chisqr3jet jerr) . lstToThreeJet . fst 
+threejetchisqr jeterr topmom otherjet = map f otherjets_comb 
+  where chisqr3func = (chisqr3jet jeterr) . lstToThreeJet . fst 
         invmasstjfunc = (invtopjet topmom) . snd
     
         f x = (chisqr3func x, invmasstjfunc x)
 --        tjets = map (lstToThreeJet.fst) otherjets_comb
         otherjets_comb = combSep 3 otherjet 
         
+lstToThreeJet :: [EtaPhiPT] -> ThreeJetsMom
+lstToThreeJet (l1:l2:l3:_) = ThreeJetsMom l1 l2 l3
+lstToThreeJet _ = error "not matched with three jets"
 
-lstToThreeJet (l1:l2:l3:ls) = ThreeJetsMom l1 l2 l3
 
 lstToEtaPhiPT :: [Double] -> EtaPhiPT 
-lstToEtaPhiPT (x1:x2:x3:xs) = (x1,x2,x3)
-
+lstToEtaPhiPT (x1:x2:x3:_) = (x1,x2,x3)
+lstToEtaPhiPT _ = error "not matched with Eta Phi PT"
 
 threejetinvmass :: [EtaPhiPT] -> Double
 threejetinvmass otherjet = sqrt $ sqr4 jetmom
@@ -108,7 +110,7 @@ threejetinvmass otherjet = sqrt $ sqr4 jetmom
 
 
 threejetinvmass_chisqr :: JetError -> Double -> [EtaPhiPT] -> [(Double,Double)]
-threejetinvmass_chisqr jerr chisqrcuth otherjet = 
+threejetinvmass_chisqr jeterr chisqrcuth otherjet = 
     if fst el < chisqrcuth then [el] else []
     where 
           el = head chisqr3_invmasses
@@ -119,7 +121,7 @@ threejetinvmass_chisqr jerr chisqrcuth otherjet =
                 jmom3 = fourmomfrometaphipt j3
             in sqrt $ sqr4 (jmom1 `plus` jmom2 `plus` jmom3 ) 
          
-          f x = (chisqr3jet jerr x, invmass3 x)
+          f x = (chisqr3jet jeterr x, invmass3 x)
           chisqr3_invmasses = sortBy (compare `on` fst) $ map f all3jet_comb
         
           otherjets_comb = combSep 3 otherjet 
@@ -127,6 +129,8 @@ threejetinvmass_chisqr jerr chisqrcuth otherjet =
           tjets_comb = map (combSep 2) tjets
           
           mk3jets ([x,y],[z]) = ThreeJetsMom x y z 
+          mk3jets _ = error "not matched with ([x,y],[z])"
+          
           mk3jets_for_one_comb = map mk3jets 
           mk3jets_for_all = map mk3jets_for_one_comb
           

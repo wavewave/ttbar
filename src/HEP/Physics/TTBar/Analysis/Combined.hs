@@ -3,24 +3,10 @@
 
 module HEP.Physics.TTBar.Analysis.Combined  where
 
-import System.IO
-import System.Posix.Files
-
-import Data.Maybe
-import Data.List
-import Data.Function
-
-import Debug.Trace
-import Data.IORef
-
-
 import HEP.Util.Functions
 
-import HROOT
 import LHCOAnalysis hiding (FourMomentum,fourmomfrometaphipt,trd3)
 
-import HEP.Physics.TTBar.Error
-import HEP.Physics.TTBar.Print
 import HEP.Physics.TTBar.Reconstruction.Combined
 
 printMinChiSqr4AllComb :: PhyEventClassified -> IO () 

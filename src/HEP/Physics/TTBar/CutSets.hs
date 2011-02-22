@@ -3,9 +3,10 @@
 module HEP.Physics.TTBar.CutSets where
   
 import Data.Iteratee as Iter 
-import Data.Iteratee.ListLike as LL 
+  
 import HEP.Physics.TTBar.Cuts
 import Data.Iteratee.Util
+
 import LHCOAnalysis
 
 
@@ -13,8 +14,12 @@ import "mtl" Control.Monad.State
 
 -- | Cut Combining Combinator 
 
+combineCutList :: (Monad m) => [PhyEventClassified -> Bool] -> Iter.Iteratee [PhyEventClassified] m a 
+                  -> Iter.Iteratee [PhyEventClassified] m a
 combineCutList cset iter = jn (filtre (checkall_cuts cset) iter)
 
+cuts :: (Monad m) => [PhyEventClassified -> Bool] -> Iter.Iteratee [PhyEventClassified] m a 
+        -> Iter.Iteratee [PhyEventClassified] m a
 cuts = combineCutList
 
 -- | Selecting Cut by event number

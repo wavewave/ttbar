@@ -13,7 +13,6 @@ import Prelude hiding (subtract)
 import HEP.Util.Functions hiding (beta)
 import Numeric.GSL.Integration
 
-import Debug.Trace
 
 data ColorExoticType = NoExotic | Singlet | Octet | Triplet | Sextet
                      deriving (Show,Eq)
@@ -65,9 +64,9 @@ beta mt s  = sqrt (1.0 - (4.0*mt^2 / s))
 -- currently these results can be applied only to Triplet and Sextets .
 
 sumM2 pcalc c0 c2 gs y s tt ut mt tphi uphi = 
-  let onlysm    = (16.0 * gs^4 ) / (s^2) * ( ut^2 + tt^2 + 2.0*s*mt^2)  
-      onlyinter = 8.0 * c0 * gs^2 * y^2 * (s * mt^2 + ut^2 ) / ( s * uphi ) 
-      onlynp    = c2 * 4.0 * y^4 * ut^2 / (uphi^2 ) 
+  let onlysm    = (16.0 * gs^(4 :: Int) ) / (s^(2 :: Int)) * ( ut^(2 :: Int) + tt^(2 :: Int) + 2.0*s*mt^(2 :: Int))  
+      onlyinter = 8.0 * c0 * gs^(2 :: Int) * y^(2 :: Int) * (s * mt^(2 :: Int) + ut^(2 :: Int) ) / ( s * uphi ) 
+      onlynp    = c2 * 4.0 * y^(4 :: Int) * ut^(2 :: Int) / (uphi^(2 :: Int) ) 
   in  case pcalc of 
     OnlySM        -> onlysm 
     OnlyNP        -> onlynp 
@@ -79,9 +78,9 @@ dsigma s beta sumM2 = 0.25 * (1.0/9.0)* beta / (32.0*pi*s) * sumM2
 
 sumM2Wcosth pcalc c0 c2 gs y s mt uphi bcosth = 
   let m = mt / sqrt s
-      onlysm    = (8.0*gs^4)*(1.0 + bcosth^2 + 4*m^2) 
-      onlyinter = 2.0*y^2*gs^2*c0*s*((1.0+bcosth)^2 + 4.0*m^2)/uphi
-      onlynp    = y^4*c2*s^2*((1.0+bcosth)^2)/(uphi^2) 
+      onlysm    = (8.0*gs^(4 :: Int))*(1.0 + bcosth^(2 :: Int) + 4*m^(2 :: Int)) 
+      onlyinter = 2.0*y^(2 :: Int)*gs^(2 :: Int)*c0*s*((1.0+bcosth)^(2 :: Int) + 4.0*m^(2 :: Int))/uphi
+      onlynp    = y^(4 :: Int)*c2*s^(2 :: Int)*((1.0+bcosth)^(2 :: Int))/(uphi^(2 :: Int)) 
   in  case pcalc of
     OnlySM -> onlysm 
     OnlyNP -> onlynp 
@@ -96,11 +95,11 @@ dsigma_dcosth_from_mom param@(MP typ mt mphi gs ys yp) pcalc mc@(TTMC p1 p2 k1 k
   let s    = mandelstamS mc 
       t    = mandelstamT mc 
       u    = mandelstamU mc 
-      tt   = t - mt^2
-      tphi = t - mphi^2
-      ut   = u - mt^2
-      uphi = u - mphi^2 
-      y    = sqrt ( ys^2 + yp^2 ) 
+      tt   = t - mt^(2 :: Int)
+      tphi = t - mphi^(2 :: Int)
+      ut   = u - mt^(2 :: Int)
+      uphi = u - mphi^(2 :: Int) 
+      y    = sqrt ( ys^(2 :: Int) + yp^(2 :: Int) ) 
       bet  = beta mt s 
       c0   = colorFactor typ Zero
       c2   = colorFactor typ Two
@@ -114,10 +113,10 @@ sigma_from_initial_mom :: ModelParameters
                           -> Double   -- ^ total cross section
 sigma_from_initial_mom param@(MP typ mt mphi gs ys yp) pcalc cmenergy = 
   let energy = cmenergy / 2.0
-      pfin = sqrt ( energy^2 - mt^2 ) 
+      pfin = sqrt ( energy^(2 :: Int) - mt^(2 :: Int) ) 
       p1 = (energy, 0, 0, energy) 
       p2 = (energy, 0, 0, -energy)
-      ds_dcth costh = let sinth = sqrt ( 1.0 - costh^2 )
+      ds_dcth costh = let sinth = sqrt ( 1.0 - costh^(2 :: Int) )
                           k1 = (energy, pfin*sinth , 0, pfin*costh) 
                           k2 = (energy, -pfin*sinth, 0, -pfin*costh ) 
                       in  dsigma_dcosth_from_mom param pcalc (TTMC p1 p2 k1 k2) 
