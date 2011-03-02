@@ -17,6 +17,8 @@ import HEP.Physics.TTBar.Model.Exotic
 
 data MachineType = PP | PPbar
 
+-- | top quark pole mass 
+mt :: Double 
 mt = 174.3
 
 data ColorExoticArg = SA { 
@@ -69,6 +71,10 @@ totalXSec_qq_exotic (SA c0 c2 y mt mphi) pcalc (alphaS, s, costh) =
     else 0.0  
 
 
+
+-- | Parton-level total cross section of SM : qqbar
+--   reference : Nason, Dawson, Ellis <http://141.211.99.67:8080/pub/Study/TTbarPhysics/NasonDawsonEllis1.pdf>
+
 totalXSec_qq_SM :: Double -> Double -> Double
 totalXSec_qq_SM alphaS s =
   if s > 4.0*mt^(2::Int) 
@@ -77,6 +83,9 @@ totalXSec_qq_SM alphaS s =
               fqqbar = (pi*beta*rho) / 27.0 * (2.0+rho) 
           in  alphaS^(2::Int) / mt^(2::Int) * fqqbar
      else 0 
+
+-- | Parton-level total cross section of SM : gluglu
+--   reference : Nason, Dawson, Ellis <http://141.211.99.67:8080/pub/Study/TTbarPhysics/NasonDawsonEllis1.pdf>
 
 totalXSec_gg_SM :: Double -> Double -> Double
 totalXSec_gg_SM alphaS s =
@@ -94,7 +103,7 @@ totalXSec_gg_SM alphaS s =
 partonXsecIntegrand :: MachineType 
                        -> (PartonType,PartonType)           -- ^ parton1, parton2
                        -> Double                            -- ^ s 
-                       -> Double                            -- ^ Q or mu
+                       -> Double                            -- ^ mu
                        -> (Double -> Double -> Double )     -- ^ sigma :: (alphaS,s) -> sigma 
                        -> (Double,Double)                   -- ^ (x1,x2)
                        -> IO Double                         -- ^ result
@@ -115,7 +124,7 @@ partonXsecIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2)= do
 partonXsecCosthIntegrand :: MachineType 
                             -> (PartonType,PartonType)           -- ^ parton1, parton2
                             -> Double                            -- ^ s 
-                            -> Double                            -- ^ Q or mu
+                            -> Double                            -- ^ mu
                             -> ((Double,Double,Double)->Double)     -- ^ sigma :: (alphaS,s,costh) -> sigma 
                             -> (Double,Double,Double)                   -- ^ (x1,x2, (1+costh)/2)
                             -> IO Double                         -- ^ result
