@@ -1,12 +1,12 @@
 Name:		ttbar
-Version:	0.0.2.1
+Version:	0.0.3.0
 Synopsis:	Useful  Useful functions for ttbar physics
 Description: 	Common useful function for ttbar production physics 
 License: 	GPL-3
 License-file:	LICENSE
 Author:		Ian-Woo Kim
 Maintainer: 	Ian-Woo Kim <ianwookim@gmail.com>
-Build-Depends:	base>4, binary, LHCOAnalysis, HROOT>=0.2, HROOT<0.3, HEPUtil, unix, mersenne-random, array, LHAPDF-haskell, iteratee-util, iteratee>0.4, hmatrix, mtl>2, transformers, simann, HEPMonteCarlo
+Build-Depends:	base>4, binary, LHCOAnalysis, HROOT>0.4, HEPUtil, unix, mersenne-random, array, LHAPDF-haskell, iteratee-util, iteratee>0.4, hmatrix, mtl>2, transformers, simann, HEPMonteCarlo
 Build-Type: 	Simple
 
 hs-source-dirs: src

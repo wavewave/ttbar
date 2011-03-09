@@ -6,6 +6,7 @@ module HEP.Physics.TTBar.Analysis.Separate  where
 import HEP.Util.Functions
 
 import HROOT
+
 import LHCOAnalysis hiding (FourMomentum,fourmomfrometaphipt,trd3)
 
 import HEP.Physics.TTBar.Error
@@ -13,12 +14,7 @@ import HEP.Physics.TTBar.Error
 import HEP.Physics.TTBar.Reconstruction.Leptonic
 import HEP.Physics.TTBar.Reconstruction.Hadronic
 
-chisqrcut :: forall t a. 
-             (Double ~ HistValueType a,
-              IO ~ TObjMonad a, 
-              THistogram a,
-              Ord t) => 
-             a -> t -> SemiLepTopInfo -> ((Double,Double),t) -> IO ()
+chisqrcut :: TH1F -> Double -> SemiLepTopInfo -> ((Double,Double),Double) -> IO ()
 chisqrcut hist cutval sinfo (x,y) =  
       if y < cutval 
         then do let einfo = cnstrctSemiLepExc4Mom sinfo x 
@@ -26,7 +22,7 @@ chisqrcut hist cutval sinfo (x,y) =
                                          `plus` neutrino_4mom einfo 
                                          `plus` bquark_4mom einfo) 
     
-                fill hist mtopmass 
+                fill1 hist mtopmass 
                 print mtopmass
         else return ()    
           
