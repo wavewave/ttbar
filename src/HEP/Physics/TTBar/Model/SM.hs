@@ -30,3 +30,12 @@ totalXSec_gg_SM alphaS s =
                         - 28.0 - 31.0 * rho )  
           in  alphaS^(2::Int) / mt^(2::Int) * fgg
      else 0 
+
+-- | Parton-level differential cross section of SM : qqbar 
+--   reference : PDB chap 39
+
+--dsigma_dOmega :: 
+
+
+
+
