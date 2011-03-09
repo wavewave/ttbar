@@ -44,8 +44,10 @@ dsigma_dOmega_qqbar2ttbar_SM mc alphas =
       t = mandelstamT mc
       u = mandelstamU mc
       rho = 4.0 * mt^(2 :: Int) / s
-      beta = sqrt (1.0-rho)
-  in  beta * sqr alphas/(9.0*s^(3::Integer))*(sqr(sqr mt-t)+sqr(sqr mt-u)+2.0*sqr mt*s)
+  in  if rho > 1.0 
+      then 0.0 
+      else let beta = sqrt (1.0-rho)
+           in  beta * sqr alphas/(9.0*s^(3::Integer))*(sqr(sqr mt-t)+sqr(sqr mt-u)+2.0*sqr mt*s)
   
 -- | Parton-level differential cross section of SM : qqbar 
 --   reference : PDB chap 39 with correction of beta (need to be checked. ) 
