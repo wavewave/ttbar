@@ -7,78 +7,47 @@ import Debug.Trace
 import System.IO.Unsafe
 
 import HEP.LHAPDF 
--- import Numeric.GSL.Integration
---import Bindings.Gsl.MonteCarloIntegration
+import HEP.MonteCarlo.Plain
 
 import System.Random.Mersenne
 
 --import Data.Array
 import HEP.Physics.TTBar.Model.Exotic
 
+import HEP.Physics.TTBar.Model.Mandelstam
+import HEP.Util.Functions
+
 data MachineType = PP | PPbar
 
 
-data ColorExoticArg = SA { 
-  sa_c0 :: Double,
-  sa_c2 :: Double, 
-  sa_y  :: Double, 
-  sa_mt :: Double, 
-  sa_mphi :: Double
-  }
 
-{-
-data SextetArg = SA { 
-  sa_c0 :: Double,
-  sa_c2 :: Double, 
-  sa_y  :: Double, 
-  sa_mt :: Double, 
-  sa_mphi :: Double
-  } -}
+xsecfuncTransformer :: Double       -- ^ mass 
+                       -> (Two2TwoMomConf -> Double -> Double)   -- ^ sigma mc alphas   
+                       -> ( (Double,Double,Double) -> Double )  -- ^ sigma (alphas,sqrts,costh)  
+xsecfuncTransformer mass sigma = 
+  \(alphas,s,costh) -> let mc = sqrtsToTwo2TwoMomConf mass (sqrt s) costh
+                       in sigma mc alphas
+                   
 
-
-
-testSextetArg = SA { 
-  sa_c0 = colorFactor Sextet Zero, 
-  sa_c2 = colorFactor Sextet Two,
-  sa_y  = 1.0, 
-  sa_mt = 174.3, 
-  sa_mphi = 600.0
-  }
-
-testTripletArg = SA { 
-  sa_c0 = colorFactor Triplet Zero, 
-  sa_c2 = colorFactor Triplet Two,
-  sa_y  = 1.0, 
-  sa_mt = 174.3, 
-  sa_mphi = 600.0
-  }
+partonXsecCosth1DIntegration :: Double                      -- ^ mass1                                
+                                -> (Two2TwoMomConf -> Double -> Double)  -- ^ cross section function (mc,alphas) 
+                                -> Double                             -- ^ sqrt s 
+                                -> Double                             -- ^ alphas
+                                -> IO Double                             -- ^ answer
+partonXsecCosth1DIntegration mass1 sigma sqrts alphas = do 
+  let func x = do let costh = 2.0*x-1.0
+                  return $ 2.0 * xsecfuncTransformer mass1 sigma (alphas,sqr sqrts,costh) 
+  plain1DMC func 100000 
 
 
-totalXSec_qq_exotic :: ColorExoticArg -> PartCalculation 
-                       -> (Double,Double,Double) -> Double
-totalXSec_qq_exotic (SA c0 c2 y mt mphi) pcalc (alphaS, s, costh) =
-  if s > 4.0*mt^(2::Int) 
-    then let gs = sqrt (4.0*pi*alphaS)
-             bet = beta mt s  
-             bcosth = bet*costh
-             ut = -s*(1+bcosth)/2
-             uphi = ut+mt^(2::Int)-mphi^(2::Int) 
-             summ2 = sumM2Wcosth pcalc c0 c2 gs y s mt uphi bcosth   
-         in  dsigma s bet summ2
-    else 0.0  
-
-
-
-
-
-partonXsecIntegrand :: MachineType 
+pdfXsecIntegrand :: MachineType 
                        -> (PartonType,PartonType)           -- ^ parton1, parton2
                        -> Double                            -- ^ s 
                        -> Double                            -- ^ mu
                        -> (Double -> Double -> Double )     -- ^ sigma :: (alphaS,s) -> sigma 
                        -> (Double,Double)                   -- ^ (x1,x2)
                        -> IO Double                         -- ^ result
-partonXsecIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2)= do  
+pdfXsecIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2)= do  
   let alphaS = 0.1155984 :: Double --  <- alphasPDF  mu 
 --  putStrLn $ "alphaS =" ++ show alphaS
   xf1 <- xfx x1 mu ptyp1 
@@ -92,14 +61,14 @@ partonXsecIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2)= do
     else return ()
   return r
 
-partonXsecCosthIntegrand :: MachineType 
-                            -> (PartonType,PartonType)           -- ^ parton1, parton2
-                            -> Double                            -- ^ s 
-                            -> Double                            -- ^ mu
-                            -> ((Double,Double,Double)->Double)     -- ^ sigma :: (alphaS,s,costh) -> sigma 
-                            -> (Double,Double,Double)                   -- ^ (x1,x2, (1+costh)/2)
-                            -> IO Double                         -- ^ result
-partonXsecCosthIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2,u)= do  
+pdfXsecCosthIntegrand :: MachineType 
+                         -> (PartonType,PartonType)           -- ^ parton1, parton2
+                         -> Double                            -- ^ s 
+                         -> Double                            -- ^ mu
+                         -> ((Double,Double,Double)->Double)     -- ^ sigma :: (alphaS,s,costh) -> sigma 
+                         -> (Double,Double,Double)                   -- ^ (x1,x2, (1+costh)/2)
+                         -> IO Double                         -- ^ result
+pdfXsecCosthIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2,u)= do  
   let alphaS = 0.1155984 :: Double --  <- alphasPDF  mu 
 --  putStrLn $ "alphaS =" ++ show alphaS
       costh = 2.0*u-1.0

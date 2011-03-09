@@ -16,6 +16,44 @@ import Numeric.GSL.Integration
 import HEP.Physics.TTBar.Model.Mandelstam
 
 
+
+data ColorExoticArg = SA { 
+  sa_c0 :: Double,
+  sa_c2 :: Double, 
+  sa_y  :: Double, 
+  sa_mt :: Double, 
+  sa_mphi :: Double
+  }
+
+{-
+data SextetArg = SA { 
+  sa_c0 :: Double,
+  sa_c2 :: Double, 
+  sa_y  :: Double, 
+  sa_mt :: Double, 
+  sa_mphi :: Double
+  } -}
+
+
+
+testSextetArg = SA { 
+  sa_c0 = colorFactor Sextet Zero, 
+  sa_c2 = colorFactor Sextet Two,
+  sa_y  = 1.0, 
+  sa_mt = 174.3, 
+  sa_mphi = 600.0
+  }
+
+testTripletArg = SA { 
+  sa_c0 = colorFactor Triplet Zero, 
+  sa_c2 = colorFactor Triplet Two,
+  sa_y  = 1.0, 
+  sa_mt = 174.3, 
+  sa_mphi = 600.0
+  }
+
+
+
 data ColorExoticType = NoExotic | Singlet | Octet | Triplet | Sextet
                      deriving (Show,Eq)
       
@@ -140,3 +178,16 @@ modelParameterFrom09113237 typ mphi = MP {
 
 
  
+totalXSec_qq_exotic :: ColorExoticArg -> PartCalculation 
+                       -> (Double,Double,Double) -> Double
+totalXSec_qq_exotic (SA c0 c2 y mt mphi) pcalc (alphaS, s, costh) =
+  if s > 4.0*mt^(2::Int) 
+    then let gs = sqrt (4.0*pi*alphaS)
+             bet = beta mt s  
+             bcosth = bet*costh
+             ut = -s*(1+bcosth)/2
+             uphi = ut+mt^(2::Int)-mphi^(2::Int) 
+             summ2 = sumM2Wcosth pcalc c0 c2 gs y s mt uphi bcosth   
+         in  dsigma s bet summ2
+    else 0.0  
+
