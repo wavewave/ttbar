@@ -24,6 +24,7 @@ Exposed-Modules:
 		 HEP.Physics.TTBar.Error,
 		 HEP.Physics.TTBar.FileWork,
 		 HEP.Physics.TTBar.Model.Exotic,
+                 HEP.Physics.TTBar.Model.SM,
 		 HEP.Physics.TTBar.Print,
 		 HEP.Physics.TTBar.Reconstruction.Combined,
 		 HEP.Physics.TTBar.Reconstruction.Hadronic,
