@@ -58,14 +58,16 @@ dsigma_dOmega_gg2ttbar_SM mc alphas =
       t = mandelstamT mc
       u = mandelstamU mc
       rho = 4.0 * mt^(2 :: Int) / s
-      beta = sqrt (1.0-rho)
-  in  beta* (sqr alphas)/(32.0*s)
-      *(6.0/sqr s*(sqr mt-t)*(sqr mt-u)
-        -(sqr mt)*(s-4.0*sqr mt)/(3*(sqr mt-t)*(sqr mt-u))
-        +4.0/3.0*((sqr mt-t)*(sqr mt-u)-2.0*sqr mt*(sqr mt+t))/sqr (sqr mt-t)
-        +4.0/3.0*((sqr mt-t)*(sqr mt-u)-2.0*sqr mt*(sqr mt+u))/sqr (sqr mt-u)
-        -3.0*((sqr mt-t)*(sqr mt-u)+(sqr mt)*(u-t))/(s*(sqr mt-t))
-        -3.0*((sqr mt-t)*(sqr mt-u)+(sqr mt)*(t-u))/(s*(sqr mt-u)))
+  in  if rho > 1.0 
+      then 0.0 
+      else let beta = sqrt (1.0-rho)
+           in  beta* (sqr alphas)/(32.0*s)
+               *(6.0/sqr s*(sqr mt-t)*(sqr mt-u)
+                 -(sqr mt)*(s-4.0*sqr mt)/(3*(sqr mt-t)*(sqr mt-u))
+                 +4.0/3.0*((sqr mt-t)*(sqr mt-u)-2.0*sqr mt*(sqr mt+t))/sqr (sqr mt-t)
+                 +4.0/3.0*((sqr mt-t)*(sqr mt-u)-2.0*sqr mt*(sqr mt+u))/sqr (sqr mt-u)
+                 -3.0*((sqr mt-t)*(sqr mt-u)+(sqr mt)*(u-t))/(s*(sqr mt-t))
+                 -3.0*((sqr mt-t)*(sqr mt-u)+(sqr mt)*(t-u))/(s*(sqr mt-u)))
 
 
 dsigma_dcosth_qqbar2ttbar_SM :: Two2TwoMomConf -> Double -> Double   
