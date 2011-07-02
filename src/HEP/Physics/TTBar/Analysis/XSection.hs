@@ -29,12 +29,12 @@ xsecfuncTransformer mass sigma =
                        in sigma mc alphas
                    
 
-partonXsecCosth1DIntegration :: Double                      -- ^ mass1                                
-                                -> (Two2TwoMomConf -> Double -> Double)  -- ^ cross section function (mc,alphas) 
-                                -> Double                             -- ^ sqrt s 
-                                -> Double                             -- ^ alphas
-                                -> IO Double                             -- ^ answer
-partonXsecCosth1DIntegration mass1 sigma sqrts alphas = do 
+partonXsecCosthInt :: Double                      -- ^ mass1                                
+                               -> (Two2TwoMomConf -> Double -> Double)  -- ^ cross section function (mc,alphas) 
+                               -> Double                             -- ^ sqrt s 
+                               -> Double                             -- ^ alphas
+                               -> IO Double                             -- ^ answer
+partonXsecCosthInt mass1 sigma sqrts alphas = do 
   let func x = do let costh = 2.0*x-1.0
                   return $ 2.0 * xsecfuncTransformer mass1 sigma (alphas,sqr sqrts,costh) 
   plain1DMC func 100000 
@@ -70,13 +70,13 @@ pdfXsecCosthIntegrand :: MachineType
                          -> IO Double                         -- ^ result
 pdfXsecCosthIntegrand mtyp (ptyp1,ptyp2) s mu sigma (x1,x2,u)= do  
   let alphaS = 0.1155984 :: Double --  <- alphasPDF  mu 
---  putStrLn $ "alphaS =" ++ show alphaS
       costh = 2.0*u-1.0
   xf1 <- xfx x1 mu ptyp1 
   xf2 <- case mtyp of 
     PP    -> ( xfx x2 mu ptyp2 )   
     PPbar -> ( xfx x2 mu (anti ptyp2) )
   let sig = sigma (alphaS, (x1*x2*s), costh) 
+  
   let r = (2.0*xf1*xf2*sig/x1/x2)
   if isNaN r 
     then putStrLn ("NaN : " ++ show (xf1,xf2,sig,r))
