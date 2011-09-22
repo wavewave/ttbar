@@ -1,6 +1,6 @@
 module HEP.Physics.TTBar.Cuts where
 
-import LHCOAnalysis hiding (FourMomentum,fourmomfrometaphipt,trd3)
+import HEP.Parser.LHCOAnalysis.PhysObj hiding (FourMomentum,fourmomfrometaphipt,trd3)
 import Data.List
 
 check :: Bool -> Maybe Bool

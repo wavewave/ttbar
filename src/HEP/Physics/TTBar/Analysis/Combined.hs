@@ -5,7 +5,7 @@ module HEP.Physics.TTBar.Analysis.Combined  where
 
 import HEP.Util.Functions
 
-import LHCOAnalysis hiding (FourMomentum,fourmomfrometaphipt,trd3)
+import HEP.Parser.LHCOAnalysis.PhysObj hiding (FourMomentum,fourmomfrometaphipt,trd3)
 
 import HEP.Physics.TTBar.Reconstruction.Combined
 

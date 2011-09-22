@@ -9,7 +9,8 @@ import Data.Iteratee.Util
 
 import Control.Monad.State
 
-import LHCOAnalysis 
+import HEP.Parser.LHCOAnalysis.PhysObj 
+import HEP.Parser.LHCOAnalysis.FetchBinary
 
 type JnEnumeratee sFrom sTo m a = Iteratee sTo m a -> Iteratee sFrom m a
 type CountIO = StateT Int IO

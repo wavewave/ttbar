@@ -1,6 +1,6 @@
 module HEP.Physics.TTBar.Reconstruction.Leptonic where
 
-import LHCOAnalysis hiding (fourmomfrometaphipt, FourMomentum)
+import HEP.Parser.LHCOAnalysis.PhysObj hiding (fourmomfrometaphipt, FourMomentum)
 
 import Numeric.LinearAlgebra 
 import Numeric.GSL.Minimization 

@@ -1,4 +1,4 @@
-{-# LANGUAGE NoMonomorphismRestriction, PackageImports #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module HEP.Physics.TTBar.CutSets where
   
@@ -7,24 +7,24 @@ import Data.Iteratee as Iter
 import HEP.Physics.TTBar.Cuts
 import Data.Iteratee.Util
 
-import LHCOAnalysis
+import HEP.Parser.LHCOAnalysis.PhysObj
 
-
-import "mtl" Control.Monad.State
+import Control.Monad 
+import Control.Monad.State
 
 -- | Cut Combining Combinator 
 
-combineCutList :: (Monad m) => [PhyEventClassified -> Bool] -> Iter.Iteratee [PhyEventClassified] m a 
+combineCutList :: (Functor m,Monad m) => [PhyEventClassified -> Bool] -> Iter.Iteratee [PhyEventClassified] m a 
                   -> Iter.Iteratee [PhyEventClassified] m a
 combineCutList cset iter = jn (filtre (checkall_cuts cset) iter)
 
-cuts :: (Monad m) => [PhyEventClassified -> Bool] -> Iter.Iteratee [PhyEventClassified] m a 
+cuts :: (Functor m, Monad m) => [PhyEventClassified -> Bool] -> Iter.Iteratee [PhyEventClassified] m a 
         -> Iter.Iteratee [PhyEventClassified] m a
 cuts = combineCutList
 
 -- | Selecting Cut by event number
 
-selectEvent :: (Monad m) => 
+selectEvent :: (Functor m, Monad m) => 
                Int -> Iter.Iteratee [PhyEventClassified] m a -> Iter.Iteratee [PhyEventClassified] m a
 selectEvent evtnum = jn . filtre (\p -> eventid p == evtnum) 
 
@@ -85,7 +85,7 @@ cutset20101111AsList = [ cut_photon_veto
                        , cut_n_jet_eta_pt 4 2.0 20
                        , cut_central_bjet_eta 1.0
                        ]  
-cutset20101111 :: (Monad m, MonadIO m) => 
+cutset20101111 :: (Functor m, Monad m, MonadIO m) => 
                 Iteratee [PhyEventClassified] m a 
                 -> Iteratee [PhyEventClassified] m a 
 cutset20101111 = combineCutList cutset20101111AsList

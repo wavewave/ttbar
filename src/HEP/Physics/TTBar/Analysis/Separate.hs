@@ -7,7 +7,7 @@ import HEP.Util.Functions
 
 import HROOT
 
-import LHCOAnalysis hiding (FourMomentum,fourmomfrometaphipt,trd3)
+import HEP.Parser.LHCOAnalysis.PhysObj hiding (FourMomentum,fourmomfrometaphipt,trd3)
 
 import HEP.Physics.TTBar.Error
 
