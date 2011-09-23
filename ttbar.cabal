@@ -6,7 +6,8 @@ License: 	GPL-3
 License-file:	LICENSE
 Author:		Ian-Woo Kim
 Maintainer: 	Ian-Woo Kim <ianwookim@gmail.com>
-Build-Depends:	base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil, unix, mersenne-random, array, iteratee-util, iteratee>0.4, hmatrixIW, mtl>2, transformers, simann
+Build-Depends:	base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil, unix, mersenne-random, array, iteratee-util, iteratee>0.4, hmatrixIW, mtl>2, LHEParser, text, enumerator-util, enumerator, 
+                transformers, simann, LHE-sanitizer
 -- , LHAPDF-haskell >= 0.0.1
 -- , HEPMonteCarlo
 Build-Type: 	Simple
@@ -18,6 +19,7 @@ ghc-prof-options: -caf-all -auto-all
 Exposed-Modules: 
 		 HEP.Physics.TTBar,
 		 HEP.Physics.TTBar.Analysis,
+                 HEP.Physics.TTBar.Analysis.Polarization,
 --		 HEP.Physics.TTBar.Analysis.Combined,
 --		 HEP.Physics.TTBar.Analysis.Separate,
 --		 HEP.Physics.TTBar.Analysis.XSection,
