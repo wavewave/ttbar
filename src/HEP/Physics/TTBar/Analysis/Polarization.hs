@@ -45,6 +45,8 @@ printDecayTop = do
           liftIO $ putStrLn $ intercalate "\n" $ map show dtops  
 
 
+
+
 {-
 matchTopDecay :: DecayTop PtlIDInfo -> Maybe (Int,Int,Int,Int,Int)
 matchTopDecay (DecayTop p dtop2) = do 
@@ -62,20 +64,3 @@ matchTopDecay (DecayTop p dtop2) = do
 
 -- liftIO $ putStrLn (formatLHEvent ev)
 -}
-
-showLHEFileStructure :: FilePath -> IO ()
-showLHEFileStructure fp = do 
-  putStrLn "showLHEFileStructure"
- 
-  withFile fp ReadMode $ \ih -> do 
-    let process = enumZip4 countIter countMarkerIter printEvent printDecayTop
-    let iter = do 
-          header <- textLHEHeader
-          -- liftIO $ mapM_ (TIO.putStr) header
-          parseEventIter process  
-
-    r <- runStateT (parseXmlFile ih iter) (0::Int)
-    putStrLn $ show r
-    return ()
-
-  

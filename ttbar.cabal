@@ -18,6 +18,7 @@ ghc-prof-options: -caf-all -auto-all
 
 Exposed-Modules: 
 		 HEP.Physics.TTBar,
+                 HEP.Physics.TTBar.Type, 
 		 HEP.Physics.TTBar.Analysis,
                  HEP.Physics.TTBar.Analysis.Polarization,
 --		 HEP.Physics.TTBar.Analysis.Combined,
