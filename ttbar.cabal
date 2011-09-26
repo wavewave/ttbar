@@ -20,6 +20,7 @@ Exposed-Modules:
 		 HEP.Physics.TTBar,
                  HEP.Physics.TTBar.Type, 
 		 HEP.Physics.TTBar.Analysis,
+                 HEP.Physics.TTBar.Analysis.PartonConstruction,
                  HEP.Physics.TTBar.Analysis.Polarization,
 --		 HEP.Physics.TTBar.Analysis.Combined,
 --		 HEP.Physics.TTBar.Analysis.Separate,

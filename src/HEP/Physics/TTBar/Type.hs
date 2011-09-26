@@ -16,7 +16,7 @@ data LeptonicTop = LTop
   , l_pwboson :: FourMomentum 
   , l_plepton :: FourMomentum
   , l_pneutrino :: FourMomentum
-  } 
+  } deriving (Show,Eq)
 
 data HadronicTop = HTop 
   { h_topnum :: TopNumber 
@@ -25,9 +25,24 @@ data HadronicTop = HTop
   , h_pwboson :: FourMomentum 
   , h_plepton :: FourMomentum
   , h_pneutrino :: FourMomentum
-  } 
+  } deriving (Show,Eq)
 
-data SemiLeptonicTopPair = SLTopPair  
-   { sl_ltop :: LeptonicTop
-   , sl_htop :: HadronicTop }
+data TopPair = SemiLeptonicTopPair { sl_ltop :: LeptonicTop
+                                   , sl_htop :: HadronicTop }
+             | LeptonicTopPair     { l_ltop1 :: LeptonicTop 
+                                   , l_ltop2 :: LeptonicTop } 
+             | HadronicTopPair     { h_htop1 :: HadronicTop
+                                   , h_htop2 :: HadronicTop } 
+
+             | NotTopPair
+             deriving (Show, Eq)
+
+
+
+data LeptonicTopCollection = LTColl { elecTops :: [LeptonicTop] 
+                                    , muonTops :: [LeptonicTop] 
+                                    , elecAntiTops :: [LeptonicTop]
+                                    , muonAntiTops :: [LeptonicTop] } 
+data HadronicTopCollection = HTColl { hadTop :: [HadronicTop]
+                                    , hadAntiTop :: [HadronicTop] }
 
