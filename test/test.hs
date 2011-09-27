@@ -69,30 +69,21 @@ printDecayTop3 hist = do
         Just (_,_,dtops) -> do
           let (lcoll,rem) = getLeptonicTop dtops
               (hcoll,rem') = getHadronicTop rem 
-              SemiLeptonicTopPair l h = mkTopPairEvent lcoll hcoll
-              topmom = l_ptop l -- getLeptonicTopMomentum tpair
-              lepmom = l_plepton l 
-
-              toplv = fourMomentumToLorentzVector topmom
-              leplv = fourMomentumToLorentzVector lepmom
-              bt = beta toplv
-              lt = boost bt
-
-              lepnew = lt <> leplv 
-              lepnew3 =  vector3 lepnew 
-          liftIO (fill1 hist (cosangle3 bt lepnew3))
+          case mkTopPairEvent lcoll hcoll of 
+            SemiLeptonicTopPair l h -> do 
+              let topmom = l_ptop l -- getLeptonicTopMomentum tpair
+                  lepmom = l_plepton l 
+                  toplv = fourMomentumToLorentzVector topmom
+                  leplv = fourMomentumToLorentzVector lepmom
+                  bt = beta toplv
+                  lt = boost bt
+                  lepnew = lt <> leplv 
+                  lepnew3 =  vector3 lepnew 
+              liftIO (fill1 hist (cosangle3 bt lepnew3))
+              return ()
+              -- printDecayTop3 hist 
+            x -> liftIO $ putStrLn $ show x  
           printDecayTop3 hist 
---          liftIO $ putStrLn $ show $ leplv 
-          
---          liftIO $ putStrLn $ show $ lepnew 
---          liftIO $ putStrLn $ show $ lepnew3 
---           liftIO $ putStrLn $ show $ cosangle3 bt lepnew3 
-
-
---           liftIO $ putStrLn $ show $ topmom
---           liftIO $ putStrLn $ show (lt <> toplv)
-
-
 
 toppairKind :: TopPair -> String
 toppairKind (LeptonicTopPair _ _) = "LL"
@@ -143,8 +134,8 @@ showLHEFileStructure basename fps = do
   return ()
 
 wdavconfig = WebDAVConfig 
-           { webdav_path_wget = "/Users/wavewave/opt/bin/wget"
-           , webdav_path_cadaver = "/Users/wavewave/opt/bin/cadaver"
+           { webdav_path_wget = "/usr/local/bin/wget"
+           , webdav_path_cadaver = "/Users/iankim/opt/homebrew/bin/cadaver"
            , webdav_baseurl = "http://susy.physics.lsa.umich.edu:8080/mc" 
            } 
 
@@ -158,7 +149,7 @@ downloadAndGunzip rdir filename = do
 
 
 workOneModel basename dirname = do 
-  let filenames = [ basename++"_set"++show setnum++"_unweighted_events.lhe" | setnum<-[1,2] ] 
+  let filenames = [ basename++"_set"++show setnum++"_unweighted_events.lhe" | setnum<-[1..10] ] 
       wdavremotedir = WebDAVRemoteDir dirname
 
   mapM_ (downloadAndGunzip wdavremotedir) filenames
@@ -183,11 +174,32 @@ dataset =
   , ("ttbardecay_TEV_c1v_pol", "c1vm200.0gr0.7gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_c1s_pol", "c1sm200.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4") ] 
 
+
+dataset_nocut = 
+  [ ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm200.0dm0.0g0.5eta1.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")  
+  , ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm400.0dm0.0g0.5eta0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm600.0dm0.0g0.5eta3.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm800.0dm0.0g0.5eta1.0_ttbarsemilep_teva_nomatch_nocut_cone0.4") 
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm1800.0qr-0.3ql0.3br1.0bl-1.0tr1.0tl-1.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2000.0qr-1.0ql1.0br5.0bl-5.0tr5.0tl-5.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2200.0qr-0.3ql0.3br1.0bl-1.0tr1.0tl-1.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2400.0qr-3.6ql3.6br3.6bl-3.6tr3.6tl-3.6_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm420.0mp100.0g0.45np6.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm440.0mp100.0g0.45np5.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_trip_pol", "tripm400.0g2.95_ttbarsemilep_teva_nomatch_nocut_cone0.4") 
+  , ("ttbardecay_TEV_trip_pol", "tripm600.0g3.4_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_trip_pol", "tripm800.0g4.15_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c8v_pol", "c8vm400.0gr0.75gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c8v_pol", "c8vm800.0gr1.4gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm200.0gr0.7gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c1s_pol", "c1sm200.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4") ] 
+
+
 main :: IO ()
 main = do 
   let f (x,y) = workOneModel y ("paper4" </> x)
   
-  mapM_ f dataset  
+  mapM_ f dataset_nocut
 
 {-
   lc <- readConfigFile "test.conf"
