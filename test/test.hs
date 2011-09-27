@@ -20,7 +20,8 @@ import Control.Monad.State
 
 import HEP.Automation.MadGraph.LHESanitizer.Parse
 
-import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra hiding ((<.>))
+import System.Process
 
 import qualified Data.Text.IO as TIO
 
@@ -41,6 +42,9 @@ import HEP.Util.Functions
 import Data.Maybe
 import HROOT
 
+import HEP.Storage.WebDAV
+
+import System.FilePath
 
 printDecayTop2 :: (MonadIO m )  => E.Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
 printDecayTop2 = do 
@@ -117,21 +121,20 @@ processOneFile hist iter fp =
   withFile fp ReadMode $ \ih -> runStateT (parseXmlFile ih iter) (0::Int)
 
 
-showLHEFileStructure :: [FilePath] -> IO ()
-showLHEFileStructure fps = do 
+showLHEFileStructure :: FilePath -> [FilePath] -> IO ()
+showLHEFileStructure basename fps = do 
   tcanvas <- newTCanvas "TEST" "TEST" 640 480 
-  h1 <- newTH1F "test" "test" 100 (-1.2) 1.2
-  let process = enumZip3 countIter countMarkerIter (printDecayTop3 h1) -- printDecayTop -- printDecayTop2
+  h1 <- newTH1F "test" "test" 50 (-1.2) 1.2
+  let process = enumZip3 countIter countMarkerIter (printDecayTop3 h1) 
   let iter = do 
          header <- textLHEHeader
---         liftIO $ mapM_ (TIO.putStr) header
          parseEventIter $ decayTopEnee =$ ordDecayTopEnee =$ process
 
   putStrLn "showLHEFileStructure"
   mapM_ (processOneFile h1 iter) fps   
 
   draw h1 "" 
-  saveAs tcanvas "test.pdf" ""
+  saveAs tcanvas (basename ++ "_costh" <.> "pdf") ""
   
 
   HROOT.delete h1 
@@ -139,7 +142,57 @@ showLHEFileStructure fps = do
   
   return ()
 
+wdavconfig = WebDAVConfig 
+           { webdav_path_wget = "/Users/wavewave/opt/bin/wget"
+           , webdav_path_cadaver = "/Users/wavewave/opt/bin/cadaver"
+           , webdav_baseurl = "http://susy.physics.lsa.umich.edu:8080/mc" 
+           } 
+
+
+downloadAndGunzip :: WebDAVRemoteDir -> FilePath -> IO ()
+downloadAndGunzip rdir filename = do 
+  fetchFile wdavconfig rdir (filename <.> "gz")
+  system $ "gunzip " ++ (filename <.> "gz")
+  return ()
+
+
+
+workOneModel basename dirname = do 
+  let filenames = [ basename++"_set"++show setnum++"_unweighted_events.lhe" | setnum<-[1,2] ] 
+      wdavremotedir = WebDAVRemoteDir dirname
+
+  mapM_ (downloadAndGunzip wdavremotedir) filenames
+  showLHEFileStructure basename filenames 
+
+dataset = 
+  [ ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm200.0dm0.0g0.5eta1.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")  
+  , ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm400.0dm0.0g0.5eta0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm600.0dm0.0g0.5eta3.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm800.0dm0.0g0.5eta1.0_ttbarsemilep_teva_nomatch_defcut_cone0.4") 
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm1800.0qr-0.3ql0.3br1.0bl-1.0tr1.0tl-1.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2000.0qr-1.0ql1.0br5.0bl-5.0tr5.0tl-5.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2200.0qr-0.3ql0.3br1.0bl-1.0tr1.0tl-1.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2400.0qr-3.6ql3.6br3.6bl-3.6tr3.6tl-3.6_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm420.0mp100.0g0.45np6.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm440.0mp100.0g0.45np5.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_trip_pol", "tripm400.0g2.95_ttbarsemilep_teva_nomatch_defcut_cone0.4") 
+  , ("ttbardecay_TEV_trip_pol", "tripm600.0g3.4_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_trip_pol", "tripm800.0g4.15_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c8v_pol", "c8vm400.0gr0.75gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c8v_pol", "c8vm800.0gr1.4gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm200.0gr0.7gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c1s_pol", "c1sm200.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4") ] 
+
 main :: IO ()
 main = do 
+  let f (x,y) = workOneModel y ("paper4" </> x)
+  
+  mapM_ f dataset  
 
-  showLHEFileStructure ["test.lhe","test2.lhe"]
+{-
+  lc <- readConfigFile "test.conf"
+  lc_clientConfiguration lc 
+-}
+
+
+--  showLHEFileStructure ["test.lhe","test2.lhe"]
