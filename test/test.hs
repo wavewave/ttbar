@@ -111,30 +111,35 @@ ordDecayTopEnee :: Monad m => Enumeratee (Maybe (a,b,[DecayTop PtlIDInfo])) (May
 ordDecayTopEnee = EL.map (fmap f)
   where f (a,b,cs) = (a,b,Prelude.map mkOrdDecayTop cs)
 
-showLHEFileStructure :: FilePath -> IO ()
-showLHEFileStructure fp = do 
+
+processOneFile :: TH1F -> (E.Iteratee Event CountIO a) -> FilePath -> IO (a,Int)
+processOneFile hist iter fp =  
+  withFile fp ReadMode $ \ih -> runStateT (parseXmlFile ih iter) (0::Int)
+
+
+showLHEFileStructure :: [FilePath] -> IO ()
+showLHEFileStructure fps = do 
+  tcanvas <- newTCanvas "TEST" "TEST" 640 480 
+  h1 <- newTH1F "test" "test" 100 (-1.2) 1.2
+  let process = enumZip3 countIter countMarkerIter (printDecayTop3 h1) -- printDecayTop -- printDecayTop2
+  let iter = do 
+         header <- textLHEHeader
+--         liftIO $ mapM_ (TIO.putStr) header
+         parseEventIter $ decayTopEnee =$ ordDecayTopEnee =$ process
+
   putStrLn "showLHEFileStructure"
+  mapM_ (processOneFile h1 iter) fps   
 
-  withFile fp ReadMode $ \ih -> do 
-    tcanvas <- newTCanvas "TEST" "TEST" 640 480 
-    h1 <- newTH1F "test" "test" 100 (-1.2) 1.2
+  draw h1 "" 
+  saveAs tcanvas "test.pdf" ""
+  
 
-    let -- process :: (MonadCount m) => E.Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m (Int, (), ())
-        process = enumZip3 countIter countMarkerIter (printDecayTop3 h1) -- printDecayTop -- printDecayTop2
-    let iter = do 
-          header <- textLHEHeader
-          liftIO $ mapM_ (TIO.putStr) header
-          parseEventIter $ decayTopEnee  =$ ordDecayTopEnee  =$  process
--- decayTopEnee =$ ordDecayTopEnee =$ process  
-    r <- runStateT (parseXmlFile ih iter) (0::Int)
-    putStrLn $ show r
-
-    draw h1 "" 
-    saveAs tcanvas "test.pdf" ""
- 
-    return ()
+  HROOT.delete h1 
+  HROOT.delete tcanvas
+  
+  return ()
 
 main :: IO ()
 main = do 
 
-  showLHEFileStructure "test.lhe"
+  showLHEFileStructure ["test.lhe","test2.lhe"]
