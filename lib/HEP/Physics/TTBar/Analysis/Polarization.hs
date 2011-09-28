@@ -9,6 +9,7 @@ import Data.Enumerator.Util
 import HEP.Parser.LHEParser.Type
 import HEP.Parser.LHEParser.Formatter 
 import HEP.Parser.LHEParser.Parser.Enumerator
+import HEP.Parser.LHEParser.DecayTop
 
 import qualified Data.Text.IO as TIO
 
@@ -44,23 +45,3 @@ printDecayTop = do
           let (_,_,dtops) = getDecayTop ev
           liftIO $ putStrLn $ intercalate "\n" $ map show dtops  
 
-
-
-
-{-
-matchTopDecay :: DecayTop PtlIDInfo -> Maybe (Int,Int,Int,Int,Int)
-matchTopDecay (DecayTop p dtop2) = do 
-   when (pdgid p == 6 ) Nothing
-
-   case dtop2 of 
-     [DecayTop 
-
-    then case dtop2 of 
-           DecayTop p2 dtop3 -> if pdgid p2 == 24 
-                                  then case dtop3 of 
-                                         DecayTop p3 dtop4 ->   
-   
-
-
--- liftIO $ putStrLn (formatLHEvent ev)
--}

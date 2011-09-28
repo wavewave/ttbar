@@ -27,13 +27,13 @@ import qualified Data.Text.IO as TIO
 
 import Data.Enumerator.Util
 
-import Data.Enumerator hiding (map,length)
+import Data.Enumerator hiding (map,length,break,head)
 import qualified Data.Enumerator as E (map, Iteratee)
 import qualified Data.Enumerator.List as EL 
 
 import HEP.Parser.LHEParser.DecayTop
 
-import Data.List hiding (map,length)
+import Data.List hiding (map,length,break,head)
 
 import Data.XML.Types
 
@@ -45,6 +45,15 @@ import HROOT
 import HEP.Storage.WebDAV
 
 import System.FilePath
+import System.Directory
+
+import Text.StringTemplate 
+import Text.StringTemplate.Helpers
+
+import Debug.Trace
+
+import HEP.Util.Count
+import Data.Enumerator.Util.Count 
 
 printDecayTop2 :: (MonadIO m )  => E.Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
 printDecayTop2 = do 
@@ -81,7 +90,6 @@ printDecayTop3 hist = do
                   lepnew3 =  vector3 lepnew 
               liftIO (fill1 hist (cosangle3 bt lepnew3))
               return ()
-              -- printDecayTop3 hist 
             x -> liftIO $ putStrLn $ show x  
           printDecayTop3 hist 
 
@@ -102,15 +110,10 @@ testmass (Decay (pt,[Terminal pb,Decay (pW, [Terminal pmu, Terminal pnu])])) = d
   putStrLn $ "mu mass = " ++ show (sqrt (dot4 pmu pmu))
   putStrLn $ "nu mass = " ++ show (sqrt (dot4 pnu pnu))
 
-ordDecayTopEnee :: Monad m => Enumeratee (Maybe (a,b,[DecayTop PtlIDInfo])) (Maybe (a,b,[DecayTop PtlIDInfo])) m c
-ordDecayTopEnee = EL.map (fmap f)
-  where f (a,b,cs) = (a,b,Prelude.map mkOrdDecayTop cs)
-
-
 processOneFile :: TH1F -> (E.Iteratee Event CountIO a) -> FilePath -> IO (a,Int)
-processOneFile hist iter fp =  
+processOneFile hist iter fp = do 
+  putStrLn $ "process " ++ fp   
   withFile fp ReadMode $ \ih -> runStateT (parseXmlFile ih iter) (0::Int)
-
 
 showLHEFileStructure :: FilePath -> [FilePath] -> IO ()
 showLHEFileStructure basename fps = do 
@@ -120,17 +123,12 @@ showLHEFileStructure basename fps = do
   let iter = do 
          header <- textLHEHeader
          parseEventIter $ decayTopEnee =$ ordDecayTopEnee =$ process
-
   putStrLn "showLHEFileStructure"
   mapM_ (processOneFile h1 iter) fps   
-
   draw h1 "" 
   saveAs tcanvas (basename ++ "_costh" <.> "pdf") ""
-  
-
   HROOT.delete h1 
   HROOT.delete tcanvas
-  
   return ()
 
 wdavconfig = WebDAVConfig 
@@ -139,17 +137,14 @@ wdavconfig = WebDAVConfig
            , webdav_baseurl = "http://susy.physics.lsa.umich.edu:8080/mc" 
            } 
 
-
 downloadAndGunzip :: WebDAVRemoteDir -> FilePath -> IO ()
 downloadAndGunzip rdir filename = do 
   fetchFile wdavconfig rdir (filename <.> "gz")
   system $ "gunzip " ++ (filename <.> "gz")
   return ()
 
-
-
-workOneModel basename dirname = do 
-  let filenames = [ basename++"_set"++show setnum++"_unweighted_events.lhe" | setnum<-[1..10] ] 
+workOneModel basename dirname sets = do 
+  let filenames = [ basename++"_set"++show setnum++"_unweighted_events.lhe" | setnum<-sets ] 
       wdavremotedir = WebDAVRemoteDir dirname
 
   mapM_ (downloadAndGunzip wdavremotedir) filenames
@@ -166,12 +161,17 @@ dataset =
   , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2400.0qr-3.6ql3.6br3.6bl-3.6tr3.6tl-3.6_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm420.0mp100.0g0.45np6.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm440.0mp100.0g0.45np5.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_alvarez_pol", "schc8vm700.0qr-5.0e-2ql0.0br-5.0e-2bl0.0tr4.5tl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_alvarez_pol", "schc8vm850.0qr-8.0e-2ql0.0br-8.0e-2bl0.0tr6.0tl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_trip_pol", "tripm400.0g2.95_ttbarsemilep_teva_nomatch_defcut_cone0.4") 
   , ("ttbardecay_TEV_trip_pol", "tripm600.0g3.4_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_trip_pol", "tripm800.0g4.15_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_c8v_pol", "c8vm400.0gr0.75gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_c8v_pol", "c8vm800.0gr1.4gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_c1v_pol", "c1vm200.0gr0.7gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm400.0gr1.3gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm600.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm800.0gr2.1gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4")
   , ("ttbardecay_TEV_c1s_pol", "c1sm200.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_defcut_cone0.4") ] 
 
 
@@ -186,24 +186,80 @@ dataset_nocut =
   , ("ttbardecay_TEV_schanc8v_pol", "schc8vm2400.0qr-3.6ql3.6br3.6bl-3.6tr3.6tl-3.6_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm420.0mp100.0g0.45np6.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_schmaltz_pol", "schc8vschmm440.0mp100.0g0.45np5.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_alvarez_pol", "schc8vm700.0qr-5.0e-2ql0.0br-5.0e-2bl0.0tr4.5tl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_alvarez_pol", "schc8vm850.0qr-8.0e-2ql0.0br-8.0e-2bl0.0tr6.0tl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_trip_pol", "tripm400.0g2.95_ttbarsemilep_teva_nomatch_nocut_cone0.4") 
   , ("ttbardecay_TEV_trip_pol", "tripm600.0g3.4_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_trip_pol", "tripm800.0g4.15_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_c8v_pol", "c8vm400.0gr0.75gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_c8v_pol", "c8vm800.0gr1.4gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_c1v_pol", "c1vm200.0gr0.7gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm400.0gr1.3gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm600.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
+  , ("ttbardecay_TEV_c1v_pol", "c1vm800.0gr2.1gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4")
   , ("ttbardecay_TEV_c1s_pol", "c1sm200.0gr1.5gl0.0_ttbarsemilep_teva_nomatch_nocut_cone0.4") ] 
+
+dataset_test = 
+  [ ("ttbardecay_TEV_FU8C1V_pol", "fu8c1vm200.0dm0.0g0.5eta1.0_ttbarsemilep_teva_nomatch_nocut_cone0.4") ]
+
+
+modelnames = map (fst . break (== '_') . snd) dataset_nocut
+
+
+makeLatexFigure :: STGroup String -> String -> String 
+makeLatexFigure templates modelname = 
+  let nocutfilename = zmangling (modelname++"_ttbarsemilep_teva_nomatch_nocut_cone0.4" ++ "_costh" ) <.> "pdf"
+      defcutfilename = zmangling (modelname++"_ttbarsemilep_teva_nomatch_defcut_cone0.4" ++ "_costh" ) <.> "pdf"
+--      modelname = undefined 
+  in renderTemplateGroup
+       templates 
+       [ ("filenameNoCut",nocutfilename) 
+       , ("filenameDefaultCut",defcutfilename)
+       , ("modelName",modelname) ] 
+       "partonlevelcompare.tex"
+
+
+makeDocument :: STGroup String -> [String] -> String 
+makeDocument templates modelnames = 
+  let figures = map (makeLatexFigure templates) modelnames
+  in renderTemplateGroup
+       templates 
+       [ ("contents", intercalate "\n" figures) ] 
+       "document.tex"
+
+zmangling :: String -> String
+zmangling [] = [] 
+zmangling (x:xs) 
+  | x == '.' = "zd" ++ zmangling xs
+  | x == 'z' = "zz" ++ zmangling xs   
+  | otherwise = x : zmangling xs 
+
+copyToZMangled :: FilePath -> IO ()
+copyToZMangled base = do 
+  putStrLn base
+  copyFile ("working3" </> base ++ "_costh" <.> "pdf") ("working3" </> zmangling base ++ "_costh" <.> "pdf")
+
 
 
 main :: IO ()
 main = do 
-  let f (x,y) = workOneModel y ("paper4" </> x)
-  
-  mapM_ f dataset_nocut
+--  putStrLn $ show modelnames 
+  currdir <- getCurrentDirectory
+--  templates <- directoryGroup currdir 
 
+
+--  mapM_ (\x -> copyToZMangled =<< (return.snd) x  ) dataset
+  mapM_ (\x -> copyToZMangled =<< (return.snd) x  ) dataset_nocut
+ 
 {-
-  lc <- readConfigFile "test.conf"
-  lc_clientConfiguration lc 
+  let str = makeDocument templates modelnames
+
+  writeFile "working3/test.tex" str 
+  
+  setCurrentDirectory "working3"
+
+  let f (x,y) = workOneModel y ("paper4" </> x) [1..100]
+  mapM_ f dataset_nocut
 -}
 
 

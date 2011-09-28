@@ -6,36 +6,49 @@ License: 	GPL-3
 License-file:	LICENSE
 Author:		Ian-Woo Kim
 Maintainer: 	Ian-Woo Kim <ianwookim@gmail.com>
-Build-Depends:	base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil, unix, mersenne-random, array, iteratee-util, iteratee>0.4, hmatrixIW, mtl>2, LHEParser, text, enumerator-util, enumerator, 
-                transformers, simann, LHE-sanitizer
--- , LHAPDF-haskell >= 0.0.1
--- , HEPMonteCarlo
+Cabal-Version:  >= 1.8
 Build-Type: 	Simple
+Data-Files:     template/*.tex.st
 
-hs-source-dirs: src
-ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind
-ghc-prof-options: -caf-all -auto-all
+Executable analysispol
+  Main-is: analysispol.hs
+  hs-source-dirs: exe
+  ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind -rtsopts
+  ghc-prof-options: -caf-all -auto-all -rtsopts
+  Build-Depends: base>4, enumerator-util>=0.1.1, HEPUtil>=0.1.2, HStringTemplateHelpersIW,
+                 HStringTemplate, directory, filepath, webdav-manager, HROOT, xml-types, LHEParser, 
+                 enumerator, text, process, hmatrixIW, LHE-sanitizer, mtl, ttbar
 
-Exposed-Modules: 
-		 HEP.Physics.TTBar,
-                 HEP.Physics.TTBar.Type, 
-		 HEP.Physics.TTBar.Analysis,
-                 HEP.Physics.TTBar.Analysis.PartonConstruction,
-                 HEP.Physics.TTBar.Analysis.Polarization,
+Library
+  hs-source-dirs: lib
+  ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind
+  ghc-prof-options: -caf-all -auto-all
+  Build-Depends: base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil>=0.1.2, 
+                 unix, mersenne-random, array, iteratee-util, iteratee>0.4, hmatrixIW, mtl>2, 
+                 LHEParser>=0.2.3, text, enumerator-util>=0.1.1, enumerator, 
+                 transformers, simann, LHE-sanitizer>=0.1.1
+                 -- , LHAPDF-haskell >= 0.0.1
+                 -- , HEPMonteCarlo
+  Exposed-Modules: 
+                   HEP.Physics.TTBar,
+                   HEP.Physics.TTBar.Type, 
+                   HEP.Physics.TTBar.Analysis,
+                   HEP.Physics.TTBar.Analysis.PartonConstruction,
+                   HEP.Physics.TTBar.Analysis.Polarization,
+                   HEP.Physics.TTBar.CutSets,
+                   HEP.Physics.TTBar.Cuts,
+                   HEP.Physics.TTBar.Error,
+                   HEP.Physics.TTBar.FileWork,
+                   HEP.Physics.TTBar.Model.Mandelstam,
+                   HEP.Physics.TTBar.Model.Exotic,
+                   HEP.Physics.TTBar.Model.SM,
+                   HEP.Physics.TTBar.Print,
+                   HEP.Physics.TTBar.Reconstruction.Combined,
+                   HEP.Physics.TTBar.Reconstruction.Hadronic,
+                   HEP.Physics.TTBar.Reconstruction.Leptonic
 --		 HEP.Physics.TTBar.Analysis.Combined,
 --		 HEP.Physics.TTBar.Analysis.Separate,
 --		 HEP.Physics.TTBar.Analysis.XSection,
-  		 HEP.Physics.TTBar.CutSets,
-		 HEP.Physics.TTBar.Cuts,
-		 HEP.Physics.TTBar.Error,
-		 HEP.Physics.TTBar.FileWork,
-                 HEP.Physics.TTBar.Model.Mandelstam,
-		 HEP.Physics.TTBar.Model.Exotic,
-                 HEP.Physics.TTBar.Model.SM,
-		 HEP.Physics.TTBar.Print,
-		 HEP.Physics.TTBar.Reconstruction.Combined,
-		 HEP.Physics.TTBar.Reconstruction.Hadronic,
-		 HEP.Physics.TTBar.Reconstruction.Leptonic
 
 
 		 
