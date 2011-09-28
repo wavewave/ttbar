@@ -67,8 +67,9 @@ printDecayTop2 = do
                                liftIO $  putStrLn "--------------"
                                printDecayTop2 
 
-printDecayTop3 :: (MonadIO m) => TH1F -> E.Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
-printDecayTop3 hist = do 
+histogramming :: (MonadIO m) => TH2D -> (TopPair -> Bool) 
+              -> E.Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
+histogramming hist cutfunc = do 
   elm <- EL.head 
   case elm of 
     Nothing -> return ()
@@ -78,20 +79,37 @@ printDecayTop3 hist = do
         Just (_,_,dtops) -> do
           let (lcoll,rem) = getLeptonicTop dtops
               (hcoll,rem') = getHadronicTop rem 
-          case mkTopPairEvent lcoll hcoll of 
-            SemiLeptonicTopPair l h -> do 
-              let topmom = l_ptop l -- getLeptonicTopMomentum tpair
-                  lepmom = l_plepton l 
-                  toplv = fourMomentumToLorentzVector topmom
-                  leplv = fourMomentumToLorentzVector lepmom
-                  bt = beta toplv
-                  lt = boost bt
-                  lepnew = lt <> leplv 
-                  lepnew3 =  vector3 lepnew 
-              liftIO (fill1 hist (cosangle3 bt lepnew3))
-              return ()
-            x -> liftIO $ putStrLn $ show x  
-          printDecayTop3 hist 
+              tpair = mkTopPairEvent lcoll hcoll 
+          when (cutfunc tpair) $ 
+            case tpair of 
+              SemiLeptonicTopPair l h -> do 
+                let topmom = l_ptop l 
+                    lepmom = l_plepton l 
+                    toplv = fourMomentumToLorentzVector topmom
+                    leplv = fourMomentumToLorentzVector lepmom
+                    bt = beta toplv
+                    lt = boost bt
+                    lepnew = lt <> leplv 
+                    lepnew3 =  vector3 lepnew 
+                    htopmom = h_ptop h
+                    htoplv = fourMomentumToLorentzVector htopmom 
+                    mttbar = invmass topmom htopmom 
+                liftIO (fill2 hist (cosangle3 bt lepnew3) mttbar )
+                return ()
+              x -> liftIO $ putStrLn $ show x  
+          histogramming hist cutfunc  
+
+tevcut :: TopPair -> Bool 
+tevcut (SemiLeptonicTopPair l h) = 
+  let lep = l_plepton l 
+      neu = l_pneutrino l
+      lb = l_pbot l
+      hb = h_pbot h
+      j1 = h_pjet1 h 
+      j2 = h_pjet2 h 
+  in pt lep > 20 && pt lb > 20 && pt hb > 20 && pt j1 > 20 && pt j2 > 20 && pt neu > 20 
+
+pt (t,x,y,z) = sqrt (x^2 + y^2)
 
 toppairKind :: TopPair -> String
 toppairKind (LeptonicTopPair _ _) = "LL"
@@ -110,26 +128,48 @@ testmass (Decay (pt,[Terminal pb,Decay (pW, [Terminal pmu, Terminal pnu])])) = d
   putStrLn $ "mu mass = " ++ show (sqrt (dot4 pmu pmu))
   putStrLn $ "nu mass = " ++ show (sqrt (dot4 pnu pnu))
 
-processOneFile :: TH1F -> (E.Iteratee Event CountIO a) -> FilePath -> IO (a,Int)
+processOneFile :: TH2D -> (E.Iteratee Event CountIO a) -> FilePath -> IO (a,Int)
 processOneFile hist iter fp = do 
   putStrLn $ "process " ++ fp   
   withFile fp ReadMode $ \ih -> runStateT (parseXmlFile ih iter) (0::Int)
 
 showLHEFileStructure :: FilePath -> [FilePath] -> IO ()
 showLHEFileStructure basename fps = do 
-  tcanvas <- newTCanvas "TEST" "TEST" 640 480 
-  h1 <- newTH1F "test" "test" 50 (-1.2) 1.2
-  let process = enumZip3 countIter countMarkerIter (printDecayTop3 h1) 
+--  tcanvas <- newTCanvas "TEST" "TEST" 640 480 
+  h2 <- newTH2D "test" "test" 50 (-1.2) 1.2 10 350 1000
+  let costh_bins = [ -1.0, -0.95 .. 1.0 ] 
+      mtt_bins = [0,350, 400, 450, 500, 550, 600, 700, 10000] 
+  setBins2 h2 (length costh_bins - 1) costh_bins (length mtt_bins -1 ) mtt_bins 
+  let process = enumZip3 countIter countMarkerIter (histogramming h2 tevcut) 
   let iter = do 
          header <- textLHEHeader
          parseEventIter $ decayTopEnee =$ ordDecayTopEnee =$ process
   putStrLn "showLHEFileStructure"
-  mapM_ (processOneFile h1 iter) fps   
-  draw h1 "" 
-  saveAs tcanvas (basename ++ "_costh" <.> "pdf") ""
-  HROOT.delete h1 
-  HROOT.delete tcanvas
+  mapM_ (processOneFile h2 iter) fps   
+  tfile <- newTFile (basename ++ "_binned_cut1" <.> "root") "NEW" "" 1
+  write h2 "" 0 0 
+  close tfile "" 
+  HROOT.delete h2
   return ()
+
+
+
+--  draw h2 "lego" 
+{-  
+  newh1 <- tH2ProjectionX (upcastTH2 h2) "newh1" 1 1 ""
+--  draw newh1 "" 
+  newh2 <- tH2ProjectionX (upcastTH2 h2) "newh2" 5 5 ""
+--  draw newh2 "" -- "same"
+  newh3 <- tH2ProjectionX (upcastTH2 h2) "newh3" 10 10 "" 
+  draw newh3 "" -- "same" -}
+  
+--  saveAs tcanvas (basename ++ "_binned" <.> "pdf") ""
+{-  HROOT.delete newh1
+  HROOT.delete newh2
+  HROOT.delete newh3 -}
+
+--  HROOT.delete tcanvas
+
 
 wdavconfig = WebDAVConfig 
            { webdav_path_wget = "/usr/local/bin/wget"
@@ -147,7 +187,7 @@ workOneModel basename dirname sets = do
   let filenames = [ basename++"_set"++show setnum++"_unweighted_events.lhe" | setnum<-sets ] 
       wdavremotedir = WebDAVRemoteDir dirname
 
-  mapM_ (downloadAndGunzip wdavremotedir) filenames
+--  mapM_ (downloadAndGunzip wdavremotedir) filenames
   showLHEFileStructure basename filenames 
 
 dataset = 
@@ -249,18 +289,19 @@ main = do
 
 
 --  mapM_ (\x -> copyToZMangled =<< (return.snd) x  ) dataset
-  mapM_ (\x -> copyToZMangled =<< (return.snd) x  ) dataset_nocut
+--  mapM_ (\x -> copyToZMangled =<< (return.snd) x  ) dataset_nocut
  
 {-
   let str = makeDocument templates modelnames
 
   writeFile "working3/test.tex" str 
+-}
   
   setCurrentDirectory "working3"
 
   let f (x,y) = workOneModel y ("paper4" </> x) [1..100]
   mapM_ f dataset_nocut
--}
+
 
 
 --  showLHEFileStructure ["test.lhe","test2.lhe"]

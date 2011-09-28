@@ -23,8 +23,8 @@ data HadronicTop = HTop
   , h_ptop :: FourMomentum
   , h_pbot  :: FourMomentum 
   , h_pwboson :: FourMomentum 
-  , h_plepton :: FourMomentum
-  , h_pneutrino :: FourMomentum
+  , h_pjet1 :: FourMomentum
+  , h_pjet2 :: FourMomentum
   } deriving (Show,Eq)
 
 data TopPair = SemiLeptonicTopPair { sl_ltop :: LeptonicTop
