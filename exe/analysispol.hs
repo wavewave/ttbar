@@ -17,6 +17,7 @@ import HEP.Parser.LHEParser.Formatter
 import HEP.Parser.LHEParser.Parser.Enumerator
 
 import Control.Monad.State
+import Control.Applicative 
 
 import HEP.Automation.MadGraph.LHESanitizer.Parse
 
@@ -68,8 +69,9 @@ printDecayTop2 = do
                                printDecayTop2 
 
 histogramming :: (MonadIO m) => TH2D -> (TopPair -> Bool) 
+              -> (TopPair -> Either String (Double,Double))
               -> E.Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
-histogramming hist cutfunc = do 
+histogramming hist cutfunc valuef = do 
   elm <- EL.head 
   case elm of 
     Nothing -> return ()
@@ -81,26 +83,49 @@ histogramming hist cutfunc = do
               (hcoll,rem') = getHadronicTop rem 
               tpair = mkTopPairEvent lcoll hcoll 
           when (cutfunc tpair) $ 
-            case tpair of 
-              SemiLeptonicTopPair l h -> do 
-                let topmom = l_ptop l 
-                    lepmom = l_plepton l 
-                    toplv = fourMomentumToLorentzVector topmom
-                    leplv = fourMomentumToLorentzVector lepmom
-                    bt = beta toplv
-                    lt = boost bt
-                    lepnew = lt <> leplv 
-                    lepnew3 =  vector3 lepnew 
-                    htopmom = h_ptop h
-                    htoplv = fourMomentumToLorentzVector htopmom 
-                    mttbar = invmass topmom htopmom 
-                liftIO (fill2 hist (cosangle3 bt lepnew3) mttbar )
-                return ()
-              x -> liftIO $ putStrLn $ show x  
-          histogramming hist cutfunc  
+            case valuef tpair of 
+              Right (vx,vy) -> liftIO (fill2 hist vx vy) >> return ()
+              Left err -> (liftIO $ putStrLn $ err) >> return ()
+          histogramming hist cutfunc valuef              
 
-tevcut :: TopPair -> Bool 
-tevcut (SemiLeptonicTopPair l h) = 
+costhlmttAtLabFrame :: TopPair -> Either String (Double,Double) 
+costhlmttAtLabFrame (SemiLeptonicTopPair l h) = 
+  let topmom = l_ptop l 
+      lepmom = l_plepton l 
+      toplv = fourMomentumToLorentzVector topmom
+      leplv = fourMomentumToLorentzVector lepmom
+      bt = beta toplv
+      lt = boost bt
+      lepnew = lt <> leplv 
+      lepnew3 =  vector3 lepnew 
+      htopmom = h_ptop h
+      htoplv = fourMomentumToLorentzVector htopmom 
+      mttbar = invmass topmom htopmom 
+  in  Right ((cosangle3 bt lepnew3), mttbar)
+costhlmttAtLabFrame a = Left ("Not semilep toppair" ++ show a)
+
+costhlmttAtCMFrame :: TopPair -> Either String (Double,Double) 
+costhlmttAtCMFrame (SemiLeptonicTopPair l h) = 
+  let ltopmom = l_ptop l 
+      htopmom = h_ptop h 
+      ttbarmom = ltopmom `plus` htopmom
+      ttbarlv = fourMomentumToLorentzVector ttbarmom
+      lt_ttbarlab = toRest ttbarlv 
+      lepmom = l_plepton l 
+      ltoplv = fourMomentumToLorentzVector ltopmom
+      leplv = fourMomentumToLorentzVector lepmom
+      leplv_ttbar = lt_ttbarlab <> leplv
+      ltoplv_ttbar = lt_ttbarlab <> ltoplv 
+      bt = beta ltoplv_ttbar 
+      lt_tttbar = boost bt 
+      leplv_t = lt_tttbar <> leplv_ttbar
+      lep3_t = vector3 leplv_t 
+      mttbar = invmass ltopmom htopmom 
+  in  Right ((cosangle3 bt lep3_t), mttbar)
+costhlmttAtCMFrame a = Left ("Not semilep toppair" ++ show a)
+
+cut1 :: TopPair -> Bool 
+cut1 (SemiLeptonicTopPair l h) = 
   let lep = l_plepton l 
       neu = l_pneutrino l
       lb = l_pbot l
@@ -108,6 +133,17 @@ tevcut (SemiLeptonicTopPair l h) =
       j1 = h_pjet1 h 
       j2 = h_pjet2 h 
   in pt lep > 20 && pt lb > 20 && pt hb > 20 && pt j1 > 20 && pt j2 > 20 && pt neu > 20 
+cut1 _ = False
+
+nocut :: TopPair -> Bool 
+nocut = const True
+
+positiveLep :: TopPair -> Bool 
+positiveLep (SemiLeptonicTopPair l h) = 
+  case l_topnum l of 
+    TopParticle -> True 
+    _ -> False
+positiveLep _ = False
 
 pt (t,x,y,z) = sqrt (x^2 + y^2)
 
@@ -140,13 +176,13 @@ showLHEFileStructure basename fps = do
   let costh_bins = [ -1.0, -0.95 .. 1.0 ] 
       mtt_bins = [0,350, 400, 450, 500, 550, 600, 700, 10000] 
   setBins2 h2 (length costh_bins - 1) costh_bins (length mtt_bins -1 ) mtt_bins 
-  let process = enumZip3 countIter countMarkerIter (histogramming h2 tevcut) 
+  let process = enumZip3 countIter countMarkerIter (histogramming h2 ((&&) <$> positiveLep <*> cut1)  costhlmttAtCMFrame) 
   let iter = do 
          header <- textLHEHeader
          parseEventIter $ decayTopEnee =$ ordDecayTopEnee =$ process
   putStrLn "showLHEFileStructure"
   mapM_ (processOneFile h2 iter) fps   
-  tfile <- newTFile (basename ++ "_binned_cut1" <.> "root") "NEW" "" 1
+  tfile <- newTFile (basename ++ "_binned_CM_cut1_pos" <.> "root") "NEW" "" 1
   write h2 "" 0 0 
   close tfile "" 
   HROOT.delete h2
