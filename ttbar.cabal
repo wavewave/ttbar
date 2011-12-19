@@ -1,5 +1,5 @@
 Name:		ttbar
-Version:	0.1
+Version:	0.1.0.0
 Synopsis:	Useful  Useful functions for ttbar physics
 Description: 	Common useful function for ttbar production physics 
 License: 	GPL-3
@@ -17,18 +17,24 @@ Executable analysispol
   ghc-prof-options: -caf-all -auto-all -rtsopts
   Build-Depends: base>4, enumerator-util>=0.1.1, HEPUtil>=0.1.2, HStringTemplateHelpersIW,
                  HStringTemplate, directory, filepath, webdav-manager, HROOT, xml-types, LHEParser, 
-                 enumerator, text, process, hmatrixIW, LHE-sanitizer, mtl, ttbar
+                 enumerator, text, process, 
+                 hmatrix >= 0.12.0.2 && <0.13, 
+                 LHE-sanitizer, mtl, ttbar
 
 Library
   hs-source-dirs: lib
   ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind
   ghc-prof-options: -caf-all -auto-all
   Build-Depends: base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil>=0.1.2, 
-                 unix, mersenne-random, array, iteratee-util, iteratee>0.4, hmatrixIW, mtl>2, 
-                 LHEParser>=0.2.3, text, enumerator-util>=0.1.1, enumerator, 
+                 unix, mersenne-random, array, iteratee-util, 
+                 iteratee == 0.8.*, 
+                 hmatrix >= 0.12.0.2 && < 0.13,  
+                 mtl == 2.*, 
+                 LHEParser>=0.2.3, 
+                 text == 0.11.*, 
+                 enumerator-util>=0.1.1, 
+                 enumerator == 0.4.*, 
                  transformers, simann, LHE-sanitizer>=0.1.1
-                 -- , LHAPDF-haskell >= 0.0.1
-                 -- , HEPMonteCarlo
   Exposed-Modules: 
                    HEP.Physics.TTBar,
                    HEP.Physics.TTBar.Type, 
