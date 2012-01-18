@@ -1,5 +1,5 @@
 Name:		ttbar
-Version:	0.1.0.0
+Version:	0.1.999
 Synopsis:	Useful  Useful functions for ttbar physics
 Description: 	Common useful function for ttbar production physics 
 License: 	GPL-3
@@ -10,16 +10,16 @@ Cabal-Version:  >= 1.8
 Build-Type: 	Simple
 Data-Files:     template/*.tex.st
 
-Executable analysispol
-  Main-is: analysispol.hs
-  hs-source-dirs: exe
-  ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind -rtsopts
-  ghc-prof-options: -caf-all -auto-all -rtsopts
-  Build-Depends: base>4, enumerator-util>=0.1.1, HEPUtil>=0.1.2, HStringTemplateHelpersIW,
-                 HStringTemplate, directory, filepath, webdav-manager, HROOT, xml-types, LHEParser, 
-                 enumerator, text, process, 
-                 hmatrix >= 0.12.0.2 && <0.13, 
-                 LHE-sanitizer, mtl, ttbar
+--Executable analysispol
+--  Main-is: analysispol.hs
+--  hs-source-dirs: exe
+--  ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind -rtsopts
+--  ghc-prof-options: -caf-all -auto-all -rtsopts
+--  Build-Depends: base>4, enumerator-util>=0.1.1, HEPUtil>=0.1.2, HStringTemplateHelpersIW,
+--                 HStringTemplate, directory, filepath, webdav-manager, HROOT, xml-types, LHEParser, 
+--                 enumerator, text, process, 
+--                 hmatrix >= 0.12.0.2 && <0.13, 
+--                 LHE-sanitizer, mtl, ttbar
 
 Library
   hs-source-dirs: lib
@@ -41,6 +41,7 @@ Library
                    HEP.Physics.TTBar.Analysis,
                    HEP.Physics.TTBar.Analysis.PartonConstruction,
                    HEP.Physics.TTBar.Analysis.Polarization,
+                   HEP.Physics.TTBar.Analysis.TopPairParton,
                    HEP.Physics.TTBar.CutSets,
                    HEP.Physics.TTBar.Cuts,
                    HEP.Physics.TTBar.Error,
