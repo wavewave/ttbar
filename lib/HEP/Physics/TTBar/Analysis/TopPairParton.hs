@@ -53,14 +53,16 @@ proceedWithActionForTopPair action = proceedOneEvent $ maybe (return ()) id
 --  
 
 
-{-
+
 showNonTTBarEvent :: (MonadIO m) => DecayTopIteratee a b m ()
 showNonTTBarEvent = 
-    proceedOneEvent $ \el -> do (_,_,dtops) <- el 
-                                case identifyTopPair dtops of 
-                                  Just _ -> return () 
-                                  Nothing -> return () --  mapM_ (liftIO . print . fmap pdgid ) dtops 
--}
+    proceedOneEvent $ \el -> case el of 
+                               Nothing -> liftIO $ putStrLn "Nothing?"
+                               Just (_,_,dtops) -> do 
+                                 case identifyTopPair dtops of 
+                                   Just _ -> return ()                                     
+                                   Nothing -> mapM_ (liftIO . print . fmap pdgid ) dtops 
+
 
 {- do 
   mel <- EL.head
