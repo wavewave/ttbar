@@ -6,6 +6,10 @@ import Control.Monad.Trans
 import Data.Enumerator
 import qualified Data.Enumerator.List as EL
 
+import Data.IORef
+
+type DecayTopIteratee a b m = Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m 
+
 data MTopPair = MTopPair { mtopmom :: Maybe FourMomentum
                          , mantitopmom :: Maybe FourMomentum } 
 
@@ -33,7 +37,7 @@ checkTTBarEvent :: Maybe (Maybe (a,b,[DecayTop PtlIDInfo])) -> Maybe TopPair
 checkTTBarEvent mel = do
   do mdetail <- mel 
      (_,_,dtops) <- mdetail
-     (identifyTopPair dtops)
+     identifyTopPair dtops
 
 
 proceedWithActionForTopPair :: (Monad m) => 
@@ -45,22 +49,22 @@ proceedWithActionForTopPair action = do
         $ checkTTBarEvent mel >>= action 
 
 
+
+showNonTTBarEvent :: (MonadIO m) => DecayTopIteratee a b m ()
+showNonTTBarEvent = do 
+  mel <- EL.head
+  maybe (return ()) (\x -> x >> showNonTTBarEvent)
+        $ do mdetail <- mel 
+             (_,_,dtops) <- mdetail 
+             case identifyTopPair dtops of 
+               Just _ -> return (return () )
+               Nothing -> return (mapM_ (liftIO . print . fmap pdgid ) dtops )
+
+
+
 showTTBarEvent :: (MonadIO m) => Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
 showTTBarEvent = proceedWithActionForTopPair (const (return . liftIO . putStrLn $ "one ttbar event"))
 
-{-
-do 
-  mel <- EL.head
-  maybe (return ()) (\x -> x >> showTTBarEvent)
-        $ checkTTBarEvent mel >> (return . liftIO . putStrLn $ "one ttbar event") -}
+countTTBarEventUsingIORef :: (MonadIO m) => IORef Int -> DecayTopIteratee a b m ()
+countTTBarEventUsingIORef ref = proceedWithActionForTopPair (const (return . liftIO $ modifyIORef ref (\x->x+1)))
 
-
-
- {-
-  maybe (return ()) 
-        (\(_,_,dtops)-> do case identifyTopPair dtops of 
-                             Nothing -> return () 
-                             Just _ ->  liftIO . putStrLn $ "one ttbar event" 
-                           showTTBarEvent )
-        mel
--}
