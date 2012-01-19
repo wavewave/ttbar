@@ -2,6 +2,7 @@ module HEP.Physics.TTBar.Analysis.TopPairParton where
 
 import HEP.Util.Functions
 import HEP.Parser.LHEParser.Type
+import HEP.Parser.LHEParser.DecayTop
 import Control.Monad
 import Control.Monad.Trans
 import Data.Enumerator
