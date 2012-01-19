@@ -9,10 +9,6 @@ import qualified Data.Enumerator.List as EL
 
 import Data.IORef
 
--- | 
-
-type DecayTopIteratee a b m = Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m 
-
 
 -- | 
 
