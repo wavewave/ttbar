@@ -34,7 +34,8 @@ Library
                  text == 0.11.*, 
                  enumerator-util>=0.1.1, 
                  enumerator == 0.4.*, 
-                 transformers, simann, LHE-sanitizer>=0.1.1
+                 transformers, simann
+                 -- , LHE-sanitizer>=0.1.1
   Exposed-Modules: 
                    HEP.Physics.TTBar,
                    HEP.Physics.TTBar.Type, 

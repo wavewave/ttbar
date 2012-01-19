@@ -17,7 +17,7 @@ import System.IO
 
 import Text.XML.Enumerator.Parse.Util
 
-import HEP.Automation.MadGraph.LHESanitizer.Parse
+-- import HEP.Automation.MadGraph.LHESanitizer.Parse
 
 import qualified Data.Enumerator.List as EL
 
