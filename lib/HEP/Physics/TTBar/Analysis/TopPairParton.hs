@@ -41,7 +41,7 @@ ifTopOrAntiTopThenGetMomentum (Terminal (PIDInfo (-6) pinfo)) mtop =
 ifTopOrAntiTopThenGetMomentum (Decay (PIDInfo 6 pinfo,_)) mtop =
   mtop { mtopmom = Just . pupTo4mom . pup $ pinfo } 
 ifTopOrAntiTopThenGetMomentum (Decay (PIDInfo (-6) pinfo,_)) mtop =
-  mtop { mtopmom = Just . pupTo4mom . pup $ pinfo } 
+  mtop { mantitopmom = Just . pupTo4mom . pup $ pinfo } 
 ifTopOrAntiTopThenGetMomentum _ mtop = mtop 
 
 
@@ -80,15 +80,15 @@ proceedWithActionForTopPair action = proceedOneEvent $ maybe (return ()) id
 
 -- | 
 
-showNonTTBarEvent :: (MonadIO m) => DecayTopIteratee a b m ()
+showNonTTBarEvent :: (MonadIO m, Show a) => DecayTopIteratee a b m ()
 showNonTTBarEvent = 
     proceedOneEvent $ \el -> case el of 
                                Nothing -> liftIO $ putStrLn "Nothing?"
-                               Just (_,_,dtops) -> do 
+                               Just (a,_,dtops) -> do 
                                  case identifyTopPair dtops of 
                                    Just _ -> return () -- liftIO $ putStrLn "huh? " -- return ()
-                                   Nothing -> -- liftIO $ putStrLn "what?" 
-                                              mapM_ (\x -> do liftIO . print . fmap pdgid $ x ; liftIO $ putStrLn "." ) dtops 
+                                   Nothing -> do liftIO $ print a -- liftIO $ putStrLn "what?" 
+                                                 mapM_ (\x -> do liftIO . print . fmap pdgid $ x ; liftIO $ putStrLn "." ) dtops 
 
 
 
@@ -98,3 +98,15 @@ showTTBarEvent = proceedWithActionForTopPair (const (return . liftIO . putStrLn 
 countTTBarEventUsingIORef :: (MonadIO m) => IORef Int -> DecayTopIteratee a b m ()
 countTTBarEventUsingIORef ref = proceedWithActionForTopPair (const (return . liftIO $ modifyIORef ref (\x->x+1)))
 
+countTTBarFBUsingIORef :: (MonadIO m) => IORef (Int,Int) -> DecayTopIteratee a b m () 
+countTTBarFBUsingIORef ref = proceedWithActionForTopPair f 
+   where f x = if isForward x 
+                 then return . liftIO $ modifyIORef ref (\(x,y) -> (x+1,y))
+                 else return . liftIO $ modifyIORef ref (\(x,y) -> (x,y+1))
+
+
+
+isForward :: TopPair -> Bool 
+isForward (TopPair t at) = let (_,etat,_) = mom_2_pt_eta_phi t
+                               (_,etaat,_) = mom_2_pt_eta_phi at
+                           in etat > etaat
