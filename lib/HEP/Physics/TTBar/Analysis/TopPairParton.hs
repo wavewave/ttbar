@@ -65,38 +65,98 @@ checkTTBarEvent el = do
 
 -- | 
 
+isForward :: TopPair -> Bool 
+isForward (TopPair t at) = let (_,etat,_) = mom_2_pt_eta_phi t
+                               (_,etaat,_) = mom_2_pt_eta_phi at
+                           in etat > etaat
+
+
+
+-- | 
+
+checkTTBarAnd :: (Monad m) => 
+                     (c -> TopPair -> c) -> c -> DecayTopIteratee a b m c
+checkTTBarAnd action = EL.fold (\b a -> maybe b (action b) (checkTTBarEvent a))
+
+-- | 
+
+checkTTBarAndM :: (Monad m) => 
+                 (c -> TopPair -> m c) -> c -> DecayTopIteratee a b m c
+checkTTBarAndM action = EL.foldM (\b a -> maybe (return b) (action b) (checkTTBarEvent a)) 
+
+
+-- | 
+
+checkTTBarAndM_ :: (Monad m) => 
+                        (TopPair -> m ()) -> DecayTopIteratee a b m ()
+checkTTBarAndM_ action = checkTTBarAndM (\() t -> action t) () 
+
+--  EL.foldM (\() a -> maybe (return ()) action (checkTTBarEvent a)) ()
+
+
+-- | 
+
+shoutTTBar :: (MonadIO m) => DecayTopIteratee a b m ()
+shoutTTBar = checkTTBarAndM_ (const (liftIO (putStrLn "one ttbar event")))
+
+-- | 
+
+countTTBar :: (MonadIO m) => DecayTopIteratee a b m Int 
+countTTBar = checkTTBarAnd (\x _ ->x+1) 0 
+
+-- |
+
+countFBTTBar :: (MonadIO m) => DecayTopIteratee a b m (Int,Int)
+countFBTTBar = checkTTBarAnd countFB (0,0)
+  where countFB (x,y) tpair = if isForward tpair then (x+1,y) else (x,y+1)
+
+-- | 
+
+afbTTBar :: (MonadIO m) => DecayTopIteratee a b m Double
+afbTTBar = countFBTTBar >>= \(f,b) -> let fdbl = fromIntegral f 
+                                          bdbl = fromIntegral b
+                                      in  return ((fdbl-bdbl) / (fdbl+bdbl))
+
+-- | deprecated 
+
 proceedOneEvent :: (Monad m) => (a -> Iteratee a m ()) -> Iteratee a m ()
 proceedOneEvent action = EL.head >>= maybe (return ()) (\x -> action x >> proceedOneEvent action)
 
 
--- |
+-- | deprecated
 
 proceedWithActionForTopPair :: (Monad m) => 
                                (TopPair -> Maybe (Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m ())) 
                             -> Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
 proceedWithActionForTopPair action = proceedOneEvent $ maybe (return ()) id 
-                                                       . (action <=< checkTTBarEvent) 
+                                                      . (action <=< checkTTBarEvent) 
 
-
--- | 
+-- | deprecated
 
 showNonTTBarEvent :: (MonadIO m, Show a) => DecayTopIteratee a b m ()
 showNonTTBarEvent = 
-    proceedOneEvent $ \el -> case el of 
-                               Nothing -> liftIO $ putStrLn "Nothing?"
-                               Just (a,_,dtops) -> do 
-                                 case identifyTopPair dtops of 
-                                   Just _ -> return () -- liftIO $ putStrLn "huh? " -- return ()
-                                   Nothing -> do liftIO $ print a -- liftIO $ putStrLn "what?" 
-                                                 mapM_ (\x -> do liftIO . print . fmap pdgid $ x ; liftIO $ putStrLn "." ) dtops 
+    proceedOneEvent $ 
+      \el -> case el of 
+               Nothing -> liftIO $ putStrLn "Nothing?"
+               Just (a,_,dtops) -> do 
+                 case identifyTopPair dtops of 
+                   Just _ -> return () 
+                   Nothing -> do liftIO $ print a 
+                                 mapM_ (\x -> do liftIO . print . fmap pdgid $ x ; liftIO $ putStrLn "." ) dtops 
 
 
+-- | deprecated
 
 showTTBarEvent :: (MonadIO m) => Iteratee (Maybe (a,b,[DecayTop PtlIDInfo])) m () 
 showTTBarEvent = proceedWithActionForTopPair (const (return . liftIO . putStrLn $ "one ttbar event"))
 
+-- | deprecated 
+
 countTTBarEventUsingIORef :: (MonadIO m) => IORef Int -> DecayTopIteratee a b m ()
 countTTBarEventUsingIORef ref = proceedWithActionForTopPair (const (return . liftIO $ modifyIORef ref (\x->x+1)))
+
+
+-- | deprecated 
 
 countTTBarFBUsingIORef :: (MonadIO m) => IORef (Int,Int) -> DecayTopIteratee a b m () 
 countTTBarFBUsingIORef ref = proceedWithActionForTopPair f 
@@ -106,7 +166,4 @@ countTTBarFBUsingIORef ref = proceedWithActionForTopPair f
 
 
 
-isForward :: TopPair -> Bool 
-isForward (TopPair t at) = let (_,etat,_) = mom_2_pt_eta_phi t
-                               (_,etaat,_) = mom_2_pt_eta_phi at
-                           in etat > etaat
+
