@@ -109,6 +109,20 @@ countFBTTBar = checkTTBarAnd countFB (0,0)
 
 -- | 
 
+data FBHL = FBHL { high :: (Int,Int), low :: (Int,Int) } 
+            deriving (Show)
+
+
+countFBHLTTBar :: (MonadIO m) => DecayTopIteratee a b m FBHL 
+countFBHLTTBar = checkTTBarAnd countFBHL FBHL { high = (0,0), low = (0,0) } 
+  where countFBHL (FBHL (hf,hb) (lf,lb)) tpair@(TopPair t at)  
+          | isForward tpair && invmass t at > 450 = FBHL (hf+1,hb) (lf,lb)
+          | isForward tpair && invmass t at <= 450 = FBHL (hf,hb) (lf+1,lb)
+          | (not.isForward) tpair && invmass t at > 450 = FBHL (hf,hb+1) (lf,lb)
+          | otherwise = FBHL (hf,hb) (lf,lb+1)
+
+-- | 
+
 afbTTBar :: (MonadIO m) => DecayTopIteratee a b m Double
 afbTTBar = countFBTTBar >>= \(f,b) -> let fdbl = fromIntegral f 
                                           bdbl = fromIntegral b
