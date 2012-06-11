@@ -28,13 +28,13 @@ Library
   Build-Depends: base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil>=0.1.2, 
                  unix, mersenne-random, array, iteratee-util, 
                  iteratee == 0.8.*, 
-                 hmatrix >= 0.12.0.2 && < 0.13,  
+                 hmatrix == 0.14.*,
                  mtl == 2.*, 
-                 LHEParser>=0.2.3, 
+                 LHEParser >=0.2.999 && < 0.4, 
                  text == 0.11.*, 
-                 enumerator-util>=0.1.1, 
-                 enumerator == 0.4.*, 
-                 transformers, simann
+                 conduit-util>=0.1.999 && <= 0.3, 
+                 conduit == 0.4.*, 
+                 transformers == 0.3.*, simann
                  -- , LHE-sanitizer>=0.1.1
   Exposed-Modules: 
                    HEP.Physics.TTBar,
