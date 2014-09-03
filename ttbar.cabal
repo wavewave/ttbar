@@ -25,38 +25,47 @@ Library
   hs-source-dirs: lib
   ghc-options: 	-Wall -O2 -threaded -funbox-strict-fields -fno-warn-unused-do-bind
   ghc-prof-options: -caf-all -auto-all
-  Build-Depends: base>4, binary, LHCOAnalysis-type, LHCOAnalysis>=0.5.1.1,HROOT>0.4, HEPUtil>=0.1.2, 
-                 unix, mersenne-random, array, iteratee-util, 
-                 iteratee == 0.8.*, 
-                 hmatrix == 0.14.*,
-                 mtl == 2.*, 
-                 LHEParser >=0.2.999 && < 0.4, 
-                 text == 0.11.*, 
-                 conduit-util>=0.1.999 && <= 0.3, 
-                 conduit == 0.4.*, 
-                 transformers == 0.3.*, simann
+  Build-Depends: 
+                 base== 4.*, 
+                 binary, 
+                 LHCOAnalysis-type, 
+                 LHCOAnalysis, 
+                 HROOT, 
+                 HEPUtil, 
+                 unix,
+                 mersenne-random, 
+                 array, 
+                 -- iteratee-util, 
+                 -- iteratee == 0.8.*, 
+                 hmatrix,
+                 mtl, 
+                 LHEParser, 
+                 text, 
+                 conduit-util, 
+                 conduit, 
+                 transformers, simann
                  -- , LHE-sanitizer>=0.1.1
   Exposed-Modules: 
-                   HEP.Physics.TTBar,
-                   HEP.Physics.TTBar.Type, 
-                   HEP.Physics.TTBar.Analysis,
-                   HEP.Physics.TTBar.Analysis.PartonConstruction,
-                   HEP.Physics.TTBar.Analysis.Polarization,
-                   HEP.Physics.TTBar.Analysis.TopPairParton,
-                   HEP.Physics.TTBar.CutSets,
-                   HEP.Physics.TTBar.Cuts,
-                   HEP.Physics.TTBar.Error,
-                   HEP.Physics.TTBar.FileWork,
-                   HEP.Physics.TTBar.Model.Mandelstam,
-                   HEP.Physics.TTBar.Model.Exotic,
-                   HEP.Physics.TTBar.Model.SM,
-                   HEP.Physics.TTBar.Print,
-                   HEP.Physics.TTBar.Reconstruction.Combined,
-                   HEP.Physics.TTBar.Reconstruction.Hadronic,
+                   HEP.Physics.TTBar
+                   HEP.Physics.TTBar.Type 
+                   -- HEP.Physics.TTBar.Analysis
+                   HEP.Physics.TTBar.Analysis.PartonConstruction
+                   HEP.Physics.TTBar.Analysis.Polarization
+                   HEP.Physics.TTBar.Analysis.TopPairParton
+                   -- HEP.Physics.TTBar.CutSets
+                   HEP.Physics.TTBar.Cuts
+                   HEP.Physics.TTBar.Error
+                   -- HEP.Physics.TTBar.FileWork
+                   HEP.Physics.TTBar.Model.Mandelstam
+                   HEP.Physics.TTBar.Model.Exotic
+                   HEP.Physics.TTBar.Model.SM
+                   HEP.Physics.TTBar.Print
+                   HEP.Physics.TTBar.Reconstruction.Combined
+                   HEP.Physics.TTBar.Reconstruction.Hadronic
                    HEP.Physics.TTBar.Reconstruction.Leptonic
---		 HEP.Physics.TTBar.Analysis.Combined,
---		 HEP.Physics.TTBar.Analysis.Separate,
---		 HEP.Physics.TTBar.Analysis.XSection,
+--		 HEP.Physics.TTBar.Analysis.Combined
+--		 HEP.Physics.TTBar.Analysis.Separate
+--		 HEP.Physics.TTBar.Analysis.XSection
 
 
 		 

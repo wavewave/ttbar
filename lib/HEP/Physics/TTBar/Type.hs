@@ -43,6 +43,8 @@ data LeptonicTopCollection = LTColl { elecTops :: [LeptonicTop]
                                     , muonTops :: [LeptonicTop] 
                                     , elecAntiTops :: [LeptonicTop]
                                     , muonAntiTops :: [LeptonicTop] } 
+                           deriving (Show,Eq)
+
 data HadronicTopCollection = HTColl { hadTop :: [HadronicTop]
                                     , hadAntiTop :: [HadronicTop] }
-
+                           deriving (Show,Eq)

@@ -7,10 +7,10 @@ import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import           Data.Conduit.Util.Control
 
-import HEP.Parser.LHEParser.Type
-import HEP.Parser.LHEParser.Formatter 
-import HEP.Parser.LHEParser.Parser.Conduit
-import HEP.Parser.LHEParser.DecayTop
+import HEP.Parser.LHE.Type
+import HEP.Parser.LHE.Formatter 
+import HEP.Parser.LHE.Conduit
+import HEP.Parser.LHE.DecayTop
 
 import qualified Data.Text.IO as TIO
 
@@ -42,6 +42,6 @@ printDecayTop = do
       case maybec of 
         Nothing -> return () 
         Just ev -> do 
-          let (_,_,dtops) = getDecayTop ev
+          let LHEventTop _ _ dtops = getDecayTop ev
           liftIO $ putStrLn $ intercalate "\n" $ map show dtops  
 

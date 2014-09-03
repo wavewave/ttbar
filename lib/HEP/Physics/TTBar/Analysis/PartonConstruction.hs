@@ -1,8 +1,8 @@
 module HEP.Physics.TTBar.Analysis.PartonConstruction where
 
 import HEP.Physics.TTBar.Type
-import HEP.Parser.LHEParser.Type
-import HEP.Parser.LHEParser.DecayTop
+import HEP.Parser.LHE.Type
+import HEP.Parser.LHE.DecayTop
 
 import Data.Maybe
 import Data.List

@@ -1,8 +1,8 @@
 module HEP.Physics.TTBar.Analysis.TopPairParton where
 
 import HEP.Util.Functions
-import HEP.Parser.LHEParser.Type
-import HEP.Parser.LHEParser.DecayTop
+import HEP.Parser.LHE.Type
+import HEP.Parser.LHE.DecayTop
 import Control.Monad
 import Control.Monad.Trans
 import Data.Conduit
