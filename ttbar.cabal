@@ -28,6 +28,7 @@ Library
   Build-Depends: 
                  base== 4.*, 
                  binary, 
+                 containers,
                  LHCOAnalysis-type, 
                  LHCOAnalysis, 
                  HROOT, 

@@ -25,6 +25,7 @@ data MTopPair = MTopPair { mtopmom :: Maybe FourMomentum
 
 data TopPair = TopPair { topmom :: FourMomentum
                        , antitopmom :: FourMomentum }
+             deriving (Show,Eq)
 
 
 -- | 

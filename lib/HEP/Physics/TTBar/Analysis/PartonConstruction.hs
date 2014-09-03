@@ -1,77 +1,117 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      : HEP.Parser.TTBar.Analysis.PartonConstruction
+-- Copyright   : (c) 2011-2014 Ian-Woo Kim
+--
+-- License     : GPL-3
+-- Maintainer  : Ian-Woo Kim <ianwookim@gmail.com>
+-- Stability   : experimental
+-- Portability : GHC
+--
+-- Decay topology parser 
+-- 
+-----------------------------------------------------------------------------
+
 module HEP.Physics.TTBar.Analysis.PartonConstruction where
 
-import HEP.Physics.TTBar.Type
-import HEP.Parser.LHE.Type
-import HEP.Parser.LHE.DecayTop
+import           Control.Applicative
+import qualified Data.Foldable as F
+import qualified Data.IntMap as IM
+import           Data.Maybe
+import           Data.List
+--
+import           HEP.Physics.TTBar.Type
+import           HEP.Parser.LHE.Type
+import           HEP.Parser.LHE.DecayTop
 
-import Data.Maybe
-import Data.List
+
+getmom = pupTo4mom . pup . ptlinfo
+
 
 getHadronicTop :: [DecayTop PtlIDInfo] -> (HadronicTopCollection, [DecayTop PtlIDInfo])
 getHadronicTop dtops =
-  let selectHadTop = matchDecayTopGroupAndGet4Momentum 
-                       (Decay ([6], [ Terminal [5] 
-                                    , Decay ([24], [ Terminal [-1,-2,-3,-4]
-                                                   , Terminal [1,2,3,4]])]))
-      selectAntiHadTop = matchDecayTopGroupAndGet4Momentum
-                       (Decay ([-6], [ Terminal [-5]
-                                     , Decay ([-24], [ Terminal [-1,-2,-3,-4]
-                                                     , Terminal [1,2,3,4]])]))
-      tlst = zip (map selectHadTop dtops) dtops
-      (notop',top') = partition (\x -> fst x == Nothing) tlst 
-      tops = catMaybes . (map fst) $ top'
+  let selectHadTop :: DecayTop PtlIDInfo -> Maybe (DecayTop (Int,PtlIDInfo))
+      selectHadTop = matchDecayTop
+                       (Decay ((1,[6]), [ Terminal (2,[5]) 
+                                        , Decay ((3,[24]), [ Terminal (4,[-1,-2,-3,-4])
+                                                           , Terminal (5,[1,2,3,4])    
+                                                           ])
+                                        ]))
+
+      selectAntiHadTop :: DecayTop PtlIDInfo -> Maybe (DecayTop (Int,PtlIDInfo))
+      selectAntiHadTop = matchDecayTop
+                       (Decay ((1,[-6]), [ Terminal (2,[-5])
+                                         , Decay ((3,[-24]), [ Terminal (4,[-1,-2,-3,-4])
+                                                             , Terminal (5,[1,2,3,4]) 
+                                                             ])
+                                         ]))
+      -- tlst :: [Maybe (DecayTop (Int,PtlIDInfo))], DecayTop PtlIDInfo
+      -- tlst = map selectHadTop dtops
+      notop' :: [(Maybe (DecayTop (Int,PtlIDInfo)), DecayTop PtlIDInfo)]
+      top' :: [(Maybe (DecayTop (Int,PtlIDInfo)), DecayTop PtlIDInfo)]
+      (notop',top') = (partition (isNothing . fst) . map ((,) <$> selectHadTop <*> id) ) dtops  
+      tops :: [IM.IntMap PtlIDInfo]
+      tops = map (IM.fromList . F.toList) . catMaybes . map fst $ top'
  
-      atlst = (\x->zip (map selectAntiHadTop x) x) (map snd notop') 
-      (noatop',atop') = partition (\x -> fst x == Nothing) atlst
-      atops = catMaybes . (map fst) $ atop'
+      atlst = (\x -> zip (map selectAntiHadTop x) x) (map snd notop') 
+      (noatop',atop') = partition (isNothing .fst) atlst
+      atops :: [IM.IntMap PtlIDInfo]
+      atops = map (IM.fromList . F.toList) . catMaybes . map fst $ atop'
 
-      getHadTop ttyp (Decay (pt,[Terminal pb,Decay (pW, [Terminal pq1,Terminal pq2])])) = 
-        HTop ttyp pt pb pW pq1 pq2
-      getHadTop _ _ = error "getHadTop error"
+            
+      getHadTop :: TopNumber -> IM.IntMap PtlIDInfo -> Maybe HadronicTop
+      getHadTop ttyp m = do -- (Decay (pt,[Terminal pb,Decay (pW, [Terminal pq1,Terminal pq2])])) =
+        pt <- getmom <$> IM.lookup 1 m
+        pb <- getmom <$> IM.lookup 2 m
+        pW <- getmom <$> IM.lookup 3 m
+        pq1 <- getmom <$> IM.lookup 5 m
+        pq2 <- getmom <$> IM.lookup 4 m
+        return (HTop ttyp pt pb pW pq1 pq2)
 
-      htop = map (getHadTop TopParticle) tops 
-      hatop = map (getHadTop AntiTopParticle) atops      
+      htop = mapMaybe (getHadTop TopParticle) tops 
+      hatop = mapMaybe (getHadTop AntiTopParticle) atops      
   in  (HTColl htop hatop, map snd noatop')
  
-
+ 
 getLeptonicTop :: [DecayTop PtlIDInfo] -> (LeptonicTopCollection, [DecayTop PtlIDInfo]) 
 getLeptonicTop dtops = 
-  let selectElecTop = matchDecayTopAndGet4Momentum  (Decay (6,[Terminal 5, Decay (24,[Terminal (-11), Terminal 12])]))
-      selectMuonTop = matchDecayTopAndGet4Momentum  (Decay (6,[Terminal 5, Decay (24,[Terminal (-13), Terminal 14])]))
-      selectElecAnti = matchDecayTopAndGet4Momentum  (Decay ((-6),[Terminal (-5), Decay ((-24),[Terminal (-12), Terminal 11])]))
-      selectMuonAnti = matchDecayTopAndGet4Momentum  (Decay ((-6),[Terminal (-5), Decay ((-24),[Terminal (-14), Terminal 13])]))
+  let selectElecTop = matchDecayTop (Decay ((1,[6]),[Terminal (2,[5]), Decay ((3,[24]),[Terminal (4,[-11]), Terminal (5,[12])])]))
+      selectMuonTop = matchDecayTop (Decay ((1,[6]),[Terminal (2,[5]), Decay ((3,[24]),[Terminal (4,[-13]), Terminal (5,[14])])]))
+      selectElecAnti = matchDecayTop (Decay ((1,[-6]),[Terminal (2,[-5]), Decay ((3,[-24]),[Terminal (5,[-12]), Terminal (4,[11])])]))
+      selectMuonAnti = matchDecayTop (Decay ((1,[-6]),[Terminal (2,[-5]), Decay ((3,[-24]),[Terminal (5,[-14]), Terminal (4,[13])])]))
 
       elst = zip (map selectElecTop dtops) dtops
       (noelec,elec) = partition (\x -> fst x == Nothing) elst
-      electops = catMaybes . (map fst) $  elec
+      electops = map (IM.fromList . F.toList) . catMaybes . map fst $ elec
 
       mlst = (\x->zip (map selectMuonTop x) x) (map snd noelec)
       (nomuon,muon) = partition (\x -> fst x == Nothing) mlst
-      muontops = catMaybes . (map fst) $  muon
+      muontops = map (IM.fromList . F.toList) . catMaybes . map fst $  muon
 
       elstanti = (\x->zip (map selectElecAnti x) x) (map snd nomuon)
       (noelecanti,elecanti) = partition (\x -> fst x == Nothing) elstanti
-      elecantitops = catMaybes . (map fst) $  elecanti
+      elecantitops = map (IM.fromList . F.toList) . catMaybes . map fst $  elecanti
 
       mlstanti = (\x->zip (map selectMuonAnti x) x) (map snd noelecanti)
       (nomuonanti,muonanti) = partition (\x -> fst x == Nothing) mlstanti
-      muonantitops = catMaybes . (map fst) $  muonanti
+      muonantitops = map (IM.fromList . F.toList) . catMaybes . (map fst) $  muonanti
 
       
-      getLepTop typ (Decay (pt,[Terminal pb,Decay (pW, [Terminal pmu, Terminal pnu])])) = 
-        LTop TopParticle typ pt pb pW pmu pnu
-      getLepTop _ _ = error "not matched"
+      getLepTop ttyp ltyp m = do -- (Decay (pt,[Decay (pW, [Terminal pmu, Terminal pnu]),Terminal pb])) = 
+        pt  <- getmom <$> IM.lookup 1 m
+        pb  <- getmom <$> IM.lookup 2 m
+        pW  <- getmom <$> IM.lookup 3 m
+        pl  <- getmom <$> IM.lookup 4 m
+        pnu <- getmom <$> IM.lookup 5 m
+        return $ LTop ttyp ltyp pt pb pW pl pnu
  
-      getAntiLepTop typ (Decay (pt,[Terminal pb,Decay (pW, [Terminal pnu, Terminal pmu])])) = 
-        LTop AntiTopParticle typ pt pb pW pmu pnu
-      getAntiLepTop _ _ = error "not matched"
-
-      eltop = map (getLepTop ElectronType) electops  
-      mltop = map (getLepTop MuonType) muontops 
-      elatop = map (getAntiLepTop ElectronType) elecantitops
-      mlatop = map (getAntiLepTop MuonType) muonantitops
+      eltop  = mapMaybe (getLepTop TopParticle ElectronType) electops  
+      mltop  = mapMaybe (getLepTop TopParticle MuonType) muontops 
+      elatop = mapMaybe (getLepTop AntiTopParticle ElectronType) elecantitops
+      mlatop = mapMaybe (getLepTop AntiTopParticle MuonType) muonantitops
 
   in (LTColl eltop mltop elatop mlatop, map snd nomuonanti)
+
 
 mkTopPairEvent :: LeptonicTopCollection -> HadronicTopCollection -> TopPair
 mkTopPairEvent lcoll hcoll = 
