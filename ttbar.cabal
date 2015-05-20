@@ -39,12 +39,14 @@ Library
                  -- iteratee-util, 
                  -- iteratee == 0.8.*, 
                  hmatrix,
+                 hmatrix-gsl,
                  mtl, 
                  LHEParser, 
                  text, 
                  conduit-util, 
                  conduit, 
-                 transformers, simann
+                 transformers
+                 -- , simann
                  -- , LHE-sanitizer>=0.1.1
   Exposed-Modules: 
                    HEP.Physics.TTBar
@@ -59,11 +61,12 @@ Library
                    -- HEP.Physics.TTBar.FileWork
                    HEP.Physics.TTBar.Model.Mandelstam
                    HEP.Physics.TTBar.Model.Exotic
+                   HEP.Physics.TTBar.Model.HeavyHiggs
                    HEP.Physics.TTBar.Model.SM
                    HEP.Physics.TTBar.Print
-                   HEP.Physics.TTBar.Reconstruction.Combined
-                   HEP.Physics.TTBar.Reconstruction.Hadronic
-                   HEP.Physics.TTBar.Reconstruction.Leptonic
+                   -- HEP.Physics.TTBar.Reconstruction.Combined
+                   -- HEP.Physics.TTBar.Reconstruction.Hadronic
+                   -- HEP.Physics.TTBar.Reconstruction.Leptonic
 --		 HEP.Physics.TTBar.Analysis.Combined
 --		 HEP.Physics.TTBar.Analysis.Separate
 --		 HEP.Physics.TTBar.Analysis.XSection
