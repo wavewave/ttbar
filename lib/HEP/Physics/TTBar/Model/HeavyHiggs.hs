@@ -55,5 +55,7 @@ dsigmaA_dz mA gammaA alphaS s z =
 
 
 -- total cross section ( need to integrate over z = cos theta)
-sigma mA gammaA alphaS s = integrateQAGS 1e-9 1000 (dsigmaA_dz mA gammaA alphaS s) (-1.0) (1.0)
+sigmaA mA gammaA alphaS s = integrateQAGS 1e-9 1000 (dsigmaA_dz mA gammaA alphaS s) (-1.0) (1.0)
+
+sigmaQCD alphaS s = integrateQAGS 1e-9 1000 (dsigmaQCD_dz alphaS s) (-1.0) (1.0)
  
